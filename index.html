@@ -1,81 +1,401 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>charles.email</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Charles — Security</title>
+  <meta name="description" content="Personal contact endpoint for a cybersecurity professional." />
 
   <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,.06);
+      --text: #e9ecf6;
+      --muted: rgba(233,236,246,.75);
+      --faint: rgba(233,236,246,.55);
+      --line: rgba(233,236,246,.12);
+      --accent: #9aa3ff;
+      --ok: #7ee787;
+      --warn: #f2cc60;
+      --bad: #ff7b72;
+      --shadow: 0 25px 70px rgba(0,0,0,.45);
+      --radius: 16px;
+    }
+
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 700px at 20% 10%, rgba(154,163,255,.18), transparent 60%),
+        radial-gradient(900px 600px at 85% 40%, rgba(126,231,135,.10), transparent 55%),
+        radial-gradient(800px 500px at 40% 90%, rgba(242,204,96,.08), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 32px 16px;
+    }
+
+    .wrap{
+      width: min(860px, 100%);
+      display:grid;
+      gap: 16px;
+    }
+
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    header{
+      padding: 26px 26px 18px;
+      display:flex;
+      flex-wrap:wrap;
+      gap: 16px;
       align-items: center;
-      justify-content: center;
-      background: #0f1220;
-      color: #eaeaf0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      justify-content: space-between;
     }
 
-    .card {
-      text-align: center;
-      padding: 2.5rem 3rem;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.04);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-      max-width: 420px;
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+      min-width: 260px;
     }
 
-    h1 {
-      margin: 0 0 1rem;
-      font-weight: 600;
-      letter-spacing: 0.03em;
+    .title h1{
+      margin:0;
+      font-size: 22px;
+      letter-spacing: .02em;
+      font-weight: 700;
     }
 
-    p {
-      margin: 0.5rem 0;
-      color: #b8bbd9;
-      font-size: 0.95rem;
+    .title .subtitle{
+      margin:0;
+      color: var(--muted);
+      font-size: 13.5px;
+      line-height: 1.35;
     }
 
-    .email {
-      display: inline-block;
-      margin-top: 1.25rem;
-      font-size: 1.1rem;
-      font-weight: 500;
-      color: #ffffff;
-      text-decoration: none;
-      border-bottom: 1px dashed rgba(255,255,255,0.4);
-      padding-bottom: 2px;
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      font-size: 12.5px;
+      white-space: nowrap;
     }
 
-    .email:hover {
-      color: #9aa3ff;
-      border-bottom-color: #9aa3ff;
+    .dot{
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--ok);
+      box-shadow: 0 0 18px rgba(126,231,135,.45);
     }
 
-    .subtle {
-      margin-top: 1.75rem;
-      font-size: 0.75rem;
-      color: #7a7da6;
-      letter-spacing: 0.05em;
+    .grid{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 16px;
+      padding: 0 26px 26px;
+    }
+
+    @media (max-width: 760px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .panel{
+      padding: 18px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.16);
+    }
+
+    .label{
+      color: var(--faint);
+      font-size: 12px;
+      letter-spacing: .12em;
       text-transform: uppercase;
+      margin: 0 0 10px;
+    }
+
+    .emailRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      align-items:center;
+      justify-content: space-between;
+    }
+
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .email{
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: .01em;
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(233,236,246,.35);
+      padding-bottom: 1px;
+    }
+    .email:hover{ color: var(--accent); border-bottom-color: var(--accent); }
+
+    .btns{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+
+    button, .btn{
+      appearance:none;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      cursor:pointer;
+      transition: transform .06s ease, border-color .2s ease, background .2s ease;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+    }
+
+    button:hover, .btn:hover{
+      border-color: rgba(154,163,255,.55);
+      background: rgba(154,163,255,.10);
+    }
+    button:active, .btn:active{ transform: translateY(1px); }
+    button:focus-visible, .btn:focus-visible{
+      outline: 2px solid rgba(154,163,255,.75);
+      outline-offset: 2px;
+    }
+
+    .k{
+      display:inline-block;
+      padding: 1px 7px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .term{
+      margin-top: 14px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .term pre{
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      color: rgba(233,236,246,.85);
+    }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style:none;
+      color: var(--muted);
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+
+    footer{
+      padding: 14px 26px 22px;
+      color: var(--faint);
+      font-size: 12px;
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      border-top: 1px solid var(--line);
+      background: rgba(0,0,0,.10);
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.72);
+      border: 1px solid rgba(233,236,246,.16);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      box-shadow: 0 10px 35px rgba(0,0,0,.45);
+    }
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-2px);
     }
   </style>
 </head>
 
 <body>
-  <div class="card">
-    <h1>Charles</h1>
-    <p>This domain exists for one reason.</p>
+  <main class="wrap">
+    <section class="card" aria-label="Contact card">
+      <header>
+        <div class="title">
+          <h1>Charles</h1>
+          <p class="subtitle">Security Operations • Incident Response • Threat Intelligence</p>
+        </div>
 
-    <a class="email" href="mailto:charles@charles.email">
-      charles@charles.email
-    </a>
+        <div class="badge" title="Status derived locally — no tracking.">
+          <span class="dot" aria-hidden="true"></span>
+          <span>available via email</span>
+          <span class="k mono" id="localTime">--:--</span>
+        </div>
+      </header>
 
-    <div class="subtle">
-      Signal over noise
-    </div>
-  </div>
+      <div class="grid">
+        <div class="panel">
+          <p class="label">Primary contact</p>
+
+          <div class="emailRow">
+            <a class="email mono" href="mailto:charles@charles.email">charles@charles.email</a>
+
+            <div class="btns">
+              <button id="copyBtn" type="button" title="Copy email address">
+                📋 <span>Copy</span>
+              </button>
+              <a class="btn" href="mailto:charles@charles.email?subject=Hello%20Charles">
+                ✉️ <span>Email</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="term">
+            <p class="label">Console</p>
+            <pre class="mono" id="console" aria-live="polite">$ _</pre>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <p class="label">Notes</p>
+          <ul class="list">
+            <li><span class="mono">$</span> No trackers. No cookies. No analytics.</li>
+            <li><span class="mono">$</span> This domain primarily supports email.</li>
+            <li><span class="mono">$</span> If it’s urgent, put <span class="mono">[URGENT]</span> in the subject.</li>
+            <li><span class="mono">$</span> PGP available on request.</li>
+          </ul>
+        </aside>
+      </div>
+
+      <footer>
+        <span class="mono">charles.email</span>
+        <span class="mono">minimal surface • maximum signal</span>
+      </footer>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">Copied.</div>
+
+  <script>
+    // Local clock (no network calls)
+    const localTimeEl = document.getElementById('localTime');
+    const tick = () => {
+      const d = new Date();
+      localTimeEl.textContent = d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+    };
+    tick();
+    setInterval(tick, 30 * 1000);
+
+    // Copy-to-clipboard for email
+    const email = "charles@charles.email";
+    const copyBtn = document.getElementById('copyBtn');
+    const toast = document.getElementById('toast');
+
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1100);
+    }
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(email);
+        showToast("Email copied to clipboard.");
+      } catch {
+        // Fallback: select + copy
+        const ta = document.createElement('textarea');
+        ta.value = email;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        showToast("Email copied.");
+      }
+    });
+
+    // Subtle "cool" touch: a one-time typed terminal line
+    const consoleEl = document.getElementById('console');
+    const lines = [
+      "$ whoami",
+      "charles",
+      "",
+      "$ contact --preferred",
+      "email: charles@charles.email",
+      "",
+      "$ echo \"minimal surface, maximum signal\""
+    ];
+    let i = 0, j = 0;
+
+    function type(){
+      const current = lines[i] ?? "";
+      const prompt = lines.slice(0, i).join("\n") + (i ? "\n" : "") + current.slice(0, j) + (j % 2 ? "▮" : " ");
+      consoleEl.textContent = prompt;
+
+      if (i >= lines.length) return;
+
+      if (j <= current.length){
+        j++;
+        setTimeout(type, 28 + Math.random()*38);
+      } else {
+        i++;
+        j = 0;
+        setTimeout(type, 260);
+      }
+    }
+    setTimeout(type, 250);
+
+    // Easter egg: press "c" to copy email
+    window.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'c' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        navigator.clipboard?.writeText(email).then(() => showToast("Copied (hotkey: c).")).catch(()=>{});
+      }
+    });
+  </script>
 </body>
 </html>
