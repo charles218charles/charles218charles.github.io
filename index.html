@@ -1,233 +1,27 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>Charles</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-
-<style>
-:root{
-  --bg:#0b1020;
-  --panel:rgba(255,255,255,.06);
-  --text:#e9ecf6;
-  --muted:rgba(233,236,246,.7);
-  --line:rgba(233,236,246,.12);
-  --ok:#7ee787;
-  --warn:#f2cc60;
-  --radius:16px;
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
-}
-.card{
-  width:min(900px,100%);
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  overflow:hidden;
-}
-header{padding:24px}
-.grid{padding:0 24px 24px;display:grid;gap:16px}
-.panel{
-  background:rgba(0,0,0,.25);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:18px;
-}
-.label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
-.btn{
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.06);
-  color:var(--text);
-  border-radius:12px;
-  padding:10px 12px;
-  cursor:pointer;
-}
-.btn[disabled]{opacity:.6;cursor:not-allowed}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-input{
-  background:rgba(0,0,0,.3);
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:10px 12px;
-  color:var(--text);
-  font-family:ui-monospace,Menlo,Consolas,monospace;
-}
-.ok{color:var(--ok)}
-.warn{color:var(--warn)}
-footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
-
-.modalCover{
-  position:absolute;
-  inset:0;
-  background:rgba(5,8,20,.96);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:10;
-}
-.modalBox{
-  width:100%;
-  background:rgba(0,0,0,.4);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:18px;
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>charles.email</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 30% 20%, #f7f7ff, #f2f2f2 60%, #ededed);
+      color: #111;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    .mark {
+      font-size: clamp(2.4rem, 8vw, 5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+  </style>
 </head>
-
 <body>
-<section class="card">
-  <header>
-    <h1>Charles</h1>
-    <p class="mono" style="color:var(--muted)">
-  Some things reveal themselves when turned halfway around.
-    </p>
-  </header>
-
-  <div class="grid">
-    <section class="panel">
-      <p class="label">Puzzle</p>
-      <div class="row">
-        <span class="mono">lbh_sbhaq_vg</span>
-        <input id="answer" placeholder="decoded text" autocomplete="off" spellcheck="false">
-        <button class="btn" id="check">Check</button>
-      </div>
-      <p id="status" class="mono" style="margin-top:8px;color:var(--muted)">
-        solve the puzzle → unlock what follows
-      </p>
-    </section>
-
-    <section class="panel" id="wisdomPanel" style="display:none;position:relative">
-      <p class="label">Unlocked</p>
-      <pre id="wisdomText" class="mono" style="white-space:pre-wrap;margin:0"></pre>
-
-      <div style="margin-top:14px">
-        <div id="contactMount"></div>
-      </div>
-
-      <div class="modalCover" id="humanModal">
-        <div class="modalBox">
-          <p class="label">One more step</p>
-          <div class="row">
-            <span class="mono" id="humanQ">…</span>
-            <input id="humanA" inputmode="numeric" placeholder="answer" autocomplete="off">
-            <button class="btn" id="humanCheck">Verify</button>
-          </div>
-          <p id="humanStatus" class="mono" style="margin-top:8px;color:var(--muted)"></p>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <footer>Can you solve the puzzle?</footer>
-</section>
-
-<script>
-(() => {
-  const EXPECTED_SHA256_HEX = "519f0289b54b8b362bec887abaf7a3f18661014f3224410f657b89505205c37d";
-
-  const WISDOM_B64 =
-"4oCiIGluY2VudGl2ZXMgb3V0bGl2ZSBpbnRlbnRpb25zCuKAoiBhdXRob3JpdHkgaXMgcGFydCBvZiB0aGUgdGhyZWF0IG1vZGVsCuKAoiBldmVyeSBjb250cm9sIGRlY2F5cwrigKIgcmVzaWxpZW5jZSBpcyBkZXNpZ25lZCBiZWZvcmUgaXQgaXMgdGVzdGVkCuKAoiB3aGF0IHN1cnZpdmVzIGluY2lkZW50cyBiZWNvbWVzIGN1bHR1cmU=";
-
-  const answer = document.getElementById("answer");
-  const check = document.getElementById("check");
-  const status = document.getElementById("status");
-  const wisdomPanel = document.getElementById("wisdomPanel");
-  const wisdomText = document.getElementById("wisdomText");
-  const contactMount = document.getElementById("contactMount");
-
-  const modal = document.getElementById("humanModal");
-  const humanQ = document.getElementById("humanQ");
-  const humanA = document.getElementById("humanA");
-  const humanCheck = document.getElementById("humanCheck");
-  const humanStatus = document.getElementById("humanStatus");
-
-  let a=0,b=0;
-
-  function normalize(s){ return s.trim().toLowerCase().replace(/\s+/g,"_"); }
-
-  async function sha256Hex(str){
-    const data = new TextEncoder().encode(str);
-    const buf = await crypto.subtle.digest("SHA-256", data);
-    const bytes = new Uint8Array(buf);
-    let hex = "";
-    for (let i=0;i<bytes.length;i++) hex += bytes[i].toString(16).padStart(2,"0");
-    return hex;
-  }
-
-  function revealWisdom(){
-    const bin = atob(WISDOM_B64);
-    const bytes = new Uint8Array(bin.length);
-    for (let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
-    wisdomText.textContent = new TextDecoder("utf-8").decode(bytes);
-  }
-
-  function showHuman(){
-    a = 10 + Math.floor(Math.random()*40);
-    b = 10 + Math.floor(Math.random()*40);
-    humanQ.textContent = `${a} + ${b} = ?`;
-    humanA.value = "";
-    humanStatus.textContent = "";
-    modal.style.display = "flex";
-  }
-
-  function renderContact(){
-    contactMount.innerHTML = "";
-    const btn = document.createElement("button");
-    btn.className = "btn";
-    btn.textContent = "Email me you solved it";
-    btn.onclick = () => {
-      const u = atob("Y2hhcmxlcw==");
-      const d = atob("Y2hhcmxlcy5lbWFpbA==");
-      const subject = encodeURIComponent("Puzzle solved");
-      const body = encodeURIComponent(
-        "Hi Charles,\n\nI solved the puzzle on your site.\n\nCheers,"
-      );
-      location.href = `mailto:${u}@${d}?subject=${subject}&body=${body}`;
-    };
-    contactMount.appendChild(btn);
-  }
-
-  check.onclick = async () => {
-    check.disabled = true;
-    try {
-      const h = await sha256Hex(normalize(answer.value));
-      if (h === EXPECTED_SHA256_HEX){
-        status.className = "mono ok";
-        status.textContent = "Correct.";
-        revealWisdom();
-        wisdomPanel.style.display = "block";
-        showHuman();
-      } else {
-        status.className = "mono warn";
-        status.textContent = "Not quite.";
-      }
-    } finally {
-      check.disabled = false;
-    }
-  };
-
-  humanCheck.onclick = () => {
-    if (Number(humanA.value) === a + b){
-      modal.style.display = "none";
-      renderContact();
-    } else {
-      humanStatus.className = "mono warn";
-      humanStatus.textContent = "Try again.";
-    }
-  };
-})();
-</script>
+  <div class="mark">charles.email</div>
 </body>
 </html>
