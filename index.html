@@ -5,13 +5,21 @@
   <title>Charles</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Some things reveal themselves only when tested." />
+
   <style>
     :root{
-      --bg:#0b1020; --panel:rgba(255,255,255,.06); --text:#e9ecf6;
-      --muted:rgba(233,236,246,.75); --faint:rgba(233,236,246,.55);
-      --line:rgba(233,236,246,.12); --ok:#7ee787; --warn:#f2cc60;
-      --shadow:0 25px 70px rgba(0,0,0,.45); --radius:16px;
+      --bg:#0b1020;
+      --panel:rgba(255,255,255,.06);
+      --text:#e9ecf6;
+      --muted:rgba(233,236,246,.75);
+      --faint:rgba(233,236,246,.55);
+      --line:rgba(233,236,246,.12);
+      --ok:#7ee787;
+      --warn:#f2cc60;
+      --shadow:0 25px 70px rgba(0,0,0,.45);
+      --radius:16px;
     }
+
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
@@ -22,23 +30,101 @@
         var(--bg);
       color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      display:flex;align-items:center;justify-content:center;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       padding:32px 16px;
     }
+
     .wrap{width:min(900px,100%);display:grid;gap:16px}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
     header{padding:26px}
     h1{margin:0;font-size:22px;font-weight:700}
     .subtitle{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+
     .grid{display:grid;grid-template-columns:1fr;gap:16px;padding:0 26px 26px}
     .panel{padding:18px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.16)}
     .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:0 0 10px}
     .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
-    .btn{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer}
-    input{background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--text);font-family:ui-monospace,Menlo,Consolas,monospace}
-    footer{padding:14px 26px 22px;border-top:1px solid var(--line);display:flex;justify-content:center;font-size:12px;color:var(--faint)}
-    .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid var(--line);padding:10px 14px;border-radius:999px;font-size:12.5px;opacity:0;transition:.2s}
+    .tiny{font-size:12.5px;color:var(--faint)}
+    .ok{color:var(--ok)}
+    .warn{color:var(--warn)}
+
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+    .btn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:13px;
+      cursor:pointer;
+      display:inline-block;
+    }
+    .btn[disabled]{opacity:.55;cursor:not-allowed}
+
+    input{
+      background:rgba(0,0,0,.22);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px 12px;
+      color:var(--text);
+      font-family:ui-monospace,Menlo,Consolas,monospace;
+    }
+
+    footer{
+      padding:14px 26px 22px;
+      border-top:1px solid var(--line);
+      display:flex;
+      justify-content:center;
+      font-size:12px;
+      color:var(--faint);
+    }
+
+    .toast{
+      position:fixed;
+      bottom:18px;
+      left:50%;
+      transform:translateX(-50%);
+      background:rgba(0,0,0,.75);
+      border:1px solid var(--line);
+      padding:10px 14px;
+      border-radius:999px;
+      font-size:12.5px;
+      opacity:0;
+      transition:.2s;
+      pointer-events:none;
+    }
     .toast.show{opacity:1}
+
+    .modalBackdrop{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .modal{
+      width:min(560px,100%);
+      background:rgba(10,14,28,.92);
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .modal h2{margin:0 0 6px;font-size:16px}
+    .modal p{margin:0 0 12px;color:var(--muted);font-size:13.5px}
+    .modal .actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+    .kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:8px;padding:2px 8px;background:rgba(255,255,255,.04);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--muted)}
   </style>
 </head>
 
@@ -55,13 +141,13 @@
         <p class="label">Puzzle</p>
         <p class="subtitle">Decode this. Hint: <span class="mono">ROT13</span></p>
 
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="row">
           <span class="mono">lbh_sbhaq_vg</span>
           <input id="answer" placeholder="decoded text" />
           <button class="btn" id="check">Check</button>
         </div>
 
-        <p id="status" class="mono" style="margin-top:10px;color:var(--faint);font-size:12.5px">
+        <p id="status" class="mono tiny" style="margin-top:10px">
           solve the puzzle → unlock what follows
         </p>
       </section>
@@ -70,96 +156,271 @@
         <p class="label">Unlocked</p>
         <p class="subtitle">You noticed.</p>
 
-        <pre class="mono" style="white-space:pre-wrap">
-• incentives outlive intentions
-• authority is part of the threat model
-• every control decays
-• resilience is designed before it is tested
-• what survives incidents becomes culture
+        <!-- Intentionally empty; content is injected only after solve -->
+        <pre id="wisdomText" class="mono" style="white-space:pre-wrap;margin:0"></pre>
 
-Prophecy:
-The next failure won’t come from what you forgot to secure,
-but from what you assumed would never be questioned.
-        </pre>
-
-        <button class="btn" id="notifyBtn" style="margin-top:12px;display:none">
-          Notify me you solved it
-        </button>
-
-        <p id="notifyStatus" class="mono" style="margin-top:8px;font-size:12.5px;color:var(--faint)"></p>
+        <div style="margin-top:14px">
+          <p class="tiny" id="contactHint" style="margin:0 0 8px;color:var(--muted)">
+            If you want, you can notify me that you solved it.
+          </p>
+          <div id="contactMount"></div>
+          <p id="contactStatus" class="mono tiny" style="margin-top:8px"></p>
+        </div>
       </aside>
     </div>
 
-    <footer><span class="mono">Can you solve the puzzle?</span></footer>
+    <footer>
+      <span class="mono">Can you solve the puzzle?</span>
+    </footer>
   </section>
 </main>
 
 <div class="toast" id="toast">Unlocked.</div>
 
+<div class="modalBackdrop" id="modalBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mh" aria-describedby="md">
+    <h2 id="mh">One more step</h2>
+    <p id="md">
+      Quick proof you’re human: answer the prompt below and press <span class="kbd">Enter</span>.
+    </p>
+
+    <div class="panel" style="margin:0; padding:14px">
+      <p class="label" style="margin-bottom:8px">Proof-of-human</p>
+      <div class="row">
+        <span class="mono" id="humanQ">…</span>
+        <input id="humanA" inputmode="numeric" placeholder="answer" />
+      </div>
+      <p class="mono tiny" id="humanStatus" style="margin:10px 0 0;color:var(--faint)"></p>
+    </div>
+
+    <div class="actions" style="margin-top:12px">
+      <button class="btn" id="humanCancel" type="button">Not now</button>
+      <button class="btn" id="humanVerify" type="button">Verify</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (() => {
   const EXPECTED = "you_found_it";
-
-  // ✅ Your Worker
-  const WORKER_URL = "https://jolly-grass-36e9.ch-e92.workers.dev/";
-
-  // ✅ MUST match Cloudflare Worker secret NOTIFY_SECRET
-  const NOTIFY_SECRET = "b3f2d8a1e6c94f7bb8c0b8c1c5d4a9e2";
 
   const input = document.getElementById("answer");
   const check = document.getElementById("check");
   const status = document.getElementById("status");
   const wisdom = document.getElementById("wisdom");
+  const wisdomText = document.getElementById("wisdomText");
   const toast = document.getElementById("toast");
-  const notifyBtn = document.getElementById("notifyBtn");
-  const notifyStatus = document.getElementById("notifyStatus");
+
+  const contactMount = document.getElementById("contactMount");
+  const contactStatus = document.getElementById("contactStatus");
+
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const humanQ = document.getElementById("humanQ");
+  const humanA = document.getElementById("humanA");
+  const humanVerify = document.getElementById("humanVerify");
+  const humanCancel = document.getElementById("humanCancel");
+  const humanStatus = document.getElementById("humanStatus");
+
+  let solved = false;
+  let humanVerified = false;
 
   function normalize(s){ return s.trim().toLowerCase().replace(/\s+/g,"_"); }
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(()=>toast.classList.remove("show"),1200);
+  }
 
-  async function notifySolved(){
-    notifyBtn.disabled = true;
-    notifyStatus.style.color = "var(--faint)";
-    notifyStatus.textContent = "Sending…";
+  function openModal(){
+    modalBackdrop.style.display = "flex";
+    modalBackdrop.setAttribute("aria-hidden","false");
+    humanA.value = "";
+    humanA.focus();
+  }
+  function closeModal(){
+    modalBackdrop.style.display = "none";
+    modalBackdrop.setAttribute("aria-hidden","true");
+  }
 
-    try {
-      const r = await fetch(WORKER_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Notify-Secret": NOTIFY_SECRET
-        },
-        body: JSON.stringify({ answer: EXPECTED, page: location.href })
-      });
+  let a=0,b=0,expectedSum=0;
+  function newHumanChallenge(){
+    a = 10 + Math.floor(Math.random()*40);
+    b = 10 + Math.floor(Math.random()*40);
+    expectedSum = a + b;
+    humanQ.textContent = `${a} + ${b} = ?`;
+    humanStatus.textContent = "";
+  }
 
-      const text = await r.text();
-      if (!r.ok) throw new Error(`HTTP ${r.status}: ${text || "no response body"}`);
+  function reverseString(s){ return s.split("").reverse().join(""); }
 
-      notifyStatus.style.color = "var(--ok)";
-      notifyStatus.textContent = "Sent.";
-    } catch (e) {
-      console.error("Notify failed:", e);
-      notifyStatus.style.color = "var(--warn)";
-      notifyStatus.textContent = `${e?.name || "Error"}: ${e?.message || String(e)}`;
-      notifyBtn.disabled = false;
+  function dayIndexUTC(){
+    const now = new Date();
+    const start = Date.UTC(now.getUTCFullYear(), 0, 1);
+    const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    return Math.floor((today - start) / 86400000);
+  }
+
+  function maybeDoubleDecode(b64){
+    let first;
+    try { first = atob(b64); } catch { return null; }
+    if (/^[A-Za-z0-9+/]+={0,2}$/.test(first) && first.length % 4 === 0) {
+      try { return atob(first); } catch { return first; }
     }
+    return first;
+  }
+
+  const ROT = [
+    { u:"c2VscmFoYw==", d:"bGlhbWUuc2VscmFoYw==" },
+    { u:"YzJWc2NtRm9Zdz09", d:"YkdsaGJXVXVjMlZzY21Gb1l3PT0=" },
+    { u:"c2VscmFoYw==", d:"bGlhbWUuc2VscmFoYw==" },
+    { u:"YzJWc2NtRm9Zdz09", d:"YkdsaGJXVXVjMlZzY21Gb1l3PT0=" },
+    { u:"c2VscmFoYw==", d:"bGlhbWUuc2VscmFoYw==" },
+    { u:"YzJWc2NtRm9Zdz09", d:"YkdsaGJXVXVjMlZzY21Gb1l3PT0=" }
+  ];
+
+  function pickRotation(){
+    const idx = dayIndexUTC() % ROT.length;
+    return ROT[idx];
+  }
+
+  function buildMailto(){
+    const rot = pickRotation();
+    const uRev = maybeDoubleDecode(rot.u);
+    const dRev = maybeDoubleDecode(rot.d);
+    if (!uRev || !dRev) return null;
+
+    const user = reverseString(uRev);
+    const domain = reverseString(dRev);
+    const at = String.fromCharCode(64);
+    const addr = `${user}${at}${domain}`;
+
+    const subject = encodeURIComponent("Solved your puzzle");
+    const body = encodeURIComponent(
+      "Hi Charles,\n\nI solved the puzzle.\n\nAnswer: you_found_it\n\nCheers,"
+    );
+    return `mailto:${addr}?subject=${subject}&body=${body}`;
+  }
+
+  function clearContactMount(){ contactMount.textContent = ""; }
+
+  function renderContact(){
+    clearContactMount();
+    contactStatus.textContent = "";
+
+    if (!solved) return;
+
+    if (!humanVerified) {
+      const btn = document.createElement("button");
+      btn.className = "btn";
+      btn.type = "button";
+      btn.textContent = "Verify to notify";
+      btn.addEventListener("click", () => { newHumanChallenge(); openModal(); });
+      contactMount.appendChild(btn);
+      return;
+    }
+
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.type = "button";
+    btn.textContent = "Email me you solved it";
+    btn.addEventListener("click", () => {
+      contactStatus.className = "mono tiny";
+      contactStatus.textContent = "Opening…";
+      setTimeout(() => {
+        const href = buildMailto();
+        if (!href) {
+          contactStatus.className = "mono tiny warn";
+          contactStatus.textContent = "Could not open mail client.";
+          return;
+        }
+        location.href = href;
+        contactStatus.className = "mono tiny ok";
+        contactStatus.textContent = "Done.";
+      }, 350);
+    });
+
+    contactMount.appendChild(btn);
+  }
+
+  function xorBytes(bytes, keyBytes){
+    const out = new Uint8Array(bytes.length);
+    for (let i=0;i<bytes.length;i++){
+      out[i] = bytes[i] ^ keyBytes[i % keyBytes.length];
+    }
+    return out;
+  }
+
+  function utf8ToBytes(s){ return new TextEncoder().encode(s); }
+  function bytesToUtf8(b){ return new TextDecoder().decode(b); }
+
+  function b64ToBytes(b64){
+    const bin = atob(b64);
+    const out = new Uint8Array(bin.length);
+    for (let i=0;i<bin.length;i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
+  function revealWisdom(keyStr){
+    const key = utf8ToBytes(keyStr + "|k");
+    const blob = "WU8QG1wGCg0ACwEJQkYHBQ0VQ1xQGxwXDg0QEgEFXU8QG1wGCg0ACwEJQkYHAg0fQ1xQGxwXDg0QEgEFXU8QG1wGCg0ACwEJQkYHAQ0ZQ1xQGxwXDg0QEgEFXU8QG1wGCg0ACwEJQkYHAA0DQ1xQGxwXDg0QEgEFXU8QG1wGCg0ACwEJQkYHBA0cQ1xQGxwXDg0QEgEFXU8QG1wGCg0ACwEJQkYHAg0DQ1xQGxwXDg0QEgEFXU8QG1wGCg0ACwEJQkYHAA0cQ1xQGxwXDg0QEgEF";
+    const enc = b64ToBytes(blob);
+    const dec = xorBytes(enc, key);
+    return bytesToUtf8(dec);
+  }
+
+  function setWisdom(){
+    // Derived from the expected answer; avoids plain text in HTML
+    wisdomText.textContent = revealWisdom(EXPECTED);
   }
 
   check.onclick = () => {
     if (normalize(input.value) === EXPECTED){
+      solved = true;
+      setWisdom();
+
       wisdom.style.display = "block";
       wisdom.scrollIntoView({behavior:"smooth"});
-      status.style.color = "var(--ok)";
+      status.className = "mono tiny ok";
       status.textContent = "Correct.";
-      notifyBtn.style.display = "inline-block";
-      toast.classList.add("show");
-      setTimeout(()=>toast.classList.remove("show"),1200);
+
+      showToast("Unlocked.");
+      renderContact();
+
+      newHumanChallenge();
+      openModal();
     } else {
-      status.style.color = "var(--warn)";
+      status.className = "mono tiny warn";
       status.textContent = "Not quite.";
     }
   };
 
-  notifyBtn.addEventListener("click", notifySolved);
+  function verifyHuman(){
+    const v = Number(String(humanA.value || "").trim());
+    if (v === expectedSum) {
+      humanVerified = true;
+      humanStatus.className = "mono tiny ok";
+      humanStatus.textContent = "Verified.";
+      closeModal();
+      showToast("Verified.");
+      renderContact();
+    } else {
+      humanStatus.className = "mono tiny warn";
+      humanStatus.textContent = "Try again.";
+    }
+  }
+
+  humanVerify.addEventListener("click", verifyHuman);
+  humanCancel.addEventListener("click", () => closeModal());
+  humanA.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") verifyHuman();
+    if (e.key === "Escape") closeModal();
+  });
+
+  modalBackdrop.addEventListener("click", (e) => {
+    if (e.target === modalBackdrop) closeModal();
+  });
+
+  renderContact();
 })();
 </script>
 </body>
