@@ -146,7 +146,6 @@
       <aside class="panel" id="wisdom" style="display:none">
         <p class="label">Unlocked</p>
         <p class="subtitle">You noticed.</p>
-
         <pre id="wisdomText" class="mono" style="white-space:pre-wrap;margin:0"></pre>
 
         <div style="margin-top:14px">
@@ -159,9 +158,7 @@
       </aside>
     </div>
 
-    <footer>
-      <span class="mono">Can you solve the puzzle?</span>
-    </footer>
+    <footer><span class="mono">Can you solve the puzzle?</span></footer>
   </section>
 </main>
 
@@ -239,7 +236,7 @@
     humanStatus.textContent = "";
   }
 
-  function reverseString(s){ return s.split("").reverse().join(""); }
+  function r(s){ return s.split("").reverse().join(""); }
 
   function dayIndexUTC(){
     const now = new Date();
@@ -248,13 +245,13 @@
     return Math.floor((today - start) / 86400000);
   }
 
-  function maybeDecode(b64){
-    let first;
-    try { first = atob(b64); } catch { return null; }
-    if (/^[A-Za-z0-9+/]+={0,2}$/.test(first) && first.length % 4 === 0) {
-      try { return atob(first); } catch { return first; }
+  function d(b64){
+    let x;
+    try { x = atob(b64); } catch { return null; }
+    if (/^[A-Za-z0-9+/]+={0,2}$/.test(x) && x.length % 4 === 0) {
+      try { return atob(x); } catch { return x; }
     }
-    return first;
+    return x;
   }
 
   const ROT = [
@@ -266,51 +263,46 @@
     { u:"YzJWc2NtRm9Zdz09", d:"YkdsaGJXVXVjMlZzY21Gb1l3PT0=" }
   ];
 
-  function pickRotation(){
-    return ROT[dayIndexUTC() % ROT.length];
-  }
+  function pickRotation(){ return ROT[dayIndexUTC() % ROT.length]; }
 
   function buildMailto(){
     const rot = pickRotation();
-    const u = maybeDecode(rot.u);
-    const d = maybeDecode(rot.d);
-    if (!u || !d) return null;
+    const u = d(rot.u);
+    const v = d(rot.d);
+    if (!u || !v) return null;
 
-    const user = reverseString(u);
-    const domain = reverseString(d);
+    const user = r(u);
+    const domain = r(v);
     const at = String.fromCharCode(64);
-    const addr = `${user}${at}${domain}`;
 
     const subject = encodeURIComponent("Solved your puzzle");
     const body = encodeURIComponent(
       "Hi Charles,\n\nI solved the puzzle.\n\nAnswer: you_found_it\n\nCheers,"
     );
-    return `mailto:${addr}?subject=${subject}&body=${body}`;
+    return `mailto:${user}${at}${domain}?subject=${subject}&body=${body}`;
   }
 
-  function clearContactMount(){ contactMount.textContent = ""; }
+  function clearContact(){ contactMount.textContent = ""; contactStatus.textContent = ""; }
 
   function renderContact(){
-    clearContactMount();
-    contactStatus.textContent = "";
-
+    clearContact();
     if (!solved) return;
 
     if (!humanVerified) {
-      const btn = document.createElement("button");
-      btn.className = "btn";
-      btn.type = "button";
-      btn.textContent = "Verify to notify";
-      btn.addEventListener("click", () => { newHumanChallenge(); openModal(); });
-      contactMount.appendChild(btn);
+      const b = document.createElement("button");
+      b.className = "btn";
+      b.type = "button";
+      b.textContent = "Verify to notify";
+      b.addEventListener("click", () => { newHumanChallenge(); openModal(); });
+      contactMount.appendChild(b);
       return;
     }
 
-    const btn = document.createElement("button");
-    btn.className = "btn";
-    btn.type = "button";
-    btn.textContent = "Email me you solved it";
-    btn.addEventListener("click", () => {
+    const b = document.createElement("button");
+    b.className = "btn";
+    b.type = "button";
+    b.textContent = "Email me you solved it";
+    b.addEventListener("click", () => {
       contactStatus.className = "mono tiny";
       contactStatus.textContent = "Opening…";
       setTimeout(() => {
@@ -325,8 +317,7 @@
         contactStatus.textContent = "Done.";
       }, 350);
     });
-
-    contactMount.appendChild(btn);
+    contactMount.appendChild(b);
   }
 
   function b64ToBytes(b64){
@@ -335,28 +326,29 @@
     for (let i=0;i<bin.length;i++) out[i] = bin.charCodeAt(i);
     return out;
   }
-  function bytesToUtf8(bytes){ return new TextDecoder().decode(bytes); }
-  function keyBytes(s){ return new TextEncoder().encode(s); }
   function x(bytes, k){
     const out = new Uint8Array(bytes.length);
     for (let i=0;i<bytes.length;i++) out[i] = bytes[i] ^ k[i % k.length];
     return out;
   }
 
-  function revealText(){
-    const blob = "m+/Xfw8BFgsKKwACGRhZAAArCgYDC0Q2BwAZBQ0GGjEVZZfuxn8IAQgDFh0cKx9PHB1ELwgGCEsWCVUrFQ0MCR1YGl0EBA0YHkYRFgYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw4=";
-    const k = keyBytes(EXPECTED + "|k");
-    const dec = x(b64ToBytes(blob), k);
-    return bytesToUtf8(dec);
+  function reveal(){
+    const blob =
+      "m+/Xfw8BFgsKKwACGRhZAAArCgYDC0Q2BwAZBQ0GGjEVZZfuxn8IAQgDFh0cKx9PHB1ELwgGCEsWCVUrFQ0MCR1YGl0EBA0YHkYRFgYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw4=";
+
+    const key = new TextEncoder().encode(EXPECTED + "|k");
+    const dec = x(b64ToBytes(blob), key);
+    return new TextDecoder().decode(dec);
   }
 
   check.onclick = () => {
     if (normalize(input.value) === EXPECTED){
       solved = true;
-      wisdomText.textContent = revealText();
 
+      wisdomText.textContent = reveal();
       wisdom.style.display = "block";
       wisdom.scrollIntoView({behavior:"smooth"});
+
       status.className = "mono tiny ok";
       status.textContent = "Correct.";
 
