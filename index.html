@@ -66,7 +66,6 @@ input{
 .warn{color:var(--warn)}
 footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
 
-/* Modal fully covering wisdom panel */
 .modalCover{
   position:absolute;
   inset:0;
@@ -78,7 +77,6 @@ footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
 }
 .modalBox{
   width:100%;
-  max-width:100%;
   background:rgba(0,0,0,.4);
   border:1px solid var(--line);
   border-radius:14px;
@@ -116,7 +114,6 @@ footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
         <p id="contactStatus" class="mono" style="margin-top:8px;color:var(--muted)"></p>
       </div>
 
-      <!-- Human challenge overlay -->
       <div class="modalCover" id="humanModal">
         <div class="modalBox">
           <p class="label">One more step</p>
@@ -139,7 +136,7 @@ footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
   const EXPECTED = "you_found_it";
 
   const WISDOM_B64 =
-"4oCiIGluY2VudGl2ZXMgb3V0bGl2ZSBpbnRlbnRpb25zCuiigKggYXV0aG9yaXR5IGlzIHBhcnQgb2YgdGhlIHRocmVhdCBtb2RlbArogoggZXZlcnkgY29udHJvbCBkZWNheXM K4oCiIHJlc2lsaWVuY2UgaXMgZGVzaWduZWQgYmVmb3JlIGl0IGlzIHRlc3RlZArogoggd2hhdCBzdXJ2aXZlcyBpbmNpZGVudHMgYmVjb21lcyBjdWx0dXJlCgpQcm9waGVjeToKVGhlIG5leHQgZmFpbHVyZSB3b27igJl0IGNvbWUgZnJvbSB3aGF0IHlvdSBmb3Jnb3QgdG8gc2VjdXJlLApidXQgZnJvbSB3aGF0IHlvdSBhc3N1bWVkIHdvdWxkIG5ldmVyIGJlIHF1ZXN0aW9uZWQu";
+"4oCiIGluY2VudGl2ZXMgb3V0bGl2ZSBpbnRlbnRpb25zCuKAoiBhdXRob3JpdHkgaXMgcGFydCBvZiB0aGUgdGhyZWF0IG1vZGVsCuKAoiBldmVyeSBjb250cm9sIGRlY2F5cwrigKIgcmVzaWxpZW5jZSBpcyBkZXNpZ25lZCBiZWZvcmUgaXQgaXMgdGVzdGVkCuKAoiB3aGF0IHN1cnZpdmVzIGluY2lkZW50cyBiZWNvbWVzIGN1bHR1cmU=";
 
   const answer = document.getElementById("answer");
   const check = document.getElementById("check");
@@ -148,7 +145,6 @@ footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
   const wisdomText = document.getElementById("wisdomText");
 
   const contactMount = document.getElementById("contactMount");
-  const contactStatus = document.getElementById("contactStatus");
 
   const modal = document.getElementById("humanModal");
   const humanQ = document.getElementById("humanQ");
@@ -160,6 +156,13 @@ footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
 
   function normalize(s){return s.trim().toLowerCase().replace(/\s+/g,"_");}
 
+  function revealWisdom(){
+    const bin = atob(WISDOM_B64);
+    const bytes = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+    wisdomText.textContent = new TextDecoder("utf-8").decode(bytes);
+  }
+
   function showHuman(){
     a = 10 + Math.floor(Math.random()*40);
     b = 10 + Math.floor(Math.random()*40);
@@ -169,17 +172,13 @@ footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
     modal.style.display = "flex";
   }
 
-  function revealWisdom(){
-    wisdomText.textContent = atob(WISDOM_B64);
-  }
-
   function renderContact(){
     contactMount.innerHTML = "";
     const btn = document.createElement("button");
     btn.className = "btn";
     btn.textContent = "Email me you solved it";
     btn.onclick = () => {
-      const u = atob("Y2hhcmxlcw==").split("").reverse().reverse().join("");
+      const u = atob("Y2hhcmxlcw==");
       const d = atob("Y2hhcmxlcy5lbWFpbA==");
       location.href = `mailto:${u}@${d}?subject=Solved your puzzle`;
     };
