@@ -67,7 +67,6 @@ input{
 .warn{color:var(--warn)}
 footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
 
-/* overlay fully covering wisdom panel */
 .modalCover{
   position:absolute;
   inset:0;
@@ -91,7 +90,7 @@ footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
 <section class="card">
   <header>
     <h1>Charles</h1>
-    <p class="mono" style="color:var(--muted)">Wisdom reveeals itself when tested.</p>
+    <p class="mono" style="color:var(--muted)">Some things reveal themselves only when tested.</p>
   </header>
 
   <div class="grid">
@@ -134,8 +133,7 @@ footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
 
 <script>
 (() => {
-  // expected hash of the normalized correct answer (sha256 hex)
-  const EXPECTED_SHA256_HEX = "d95d8d1b6adf2d60a3d0e0a3fdfb5a30d7f4e2c9e7e62f3c9c7ff0a71c0f5bdb";
+  const EXPECTED_SHA256_HEX = "519f0289b54b8b362bec887abaf7a3f18661014f3224410f657b89505205c37d";
 
   const WISDOM_B64 =
 "4oCiIGluY2VudGl2ZXMgb3V0bGl2ZSBpbnRlbnRpb25zCuKAoiBhdXRob3JpdHkgaXMgcGFydCBvZiB0aGUgdGhyZWF0IG1vZGVsCuKAoiBldmVyeSBjb250cm9sIGRlY2F5cwrigKIgcmVzaWxpZW5jZSBpcyBkZXNpZ25lZCBiZWZvcmUgaXQgaXMgdGVzdGVkCuKAoiB3aGF0IHN1cnZpdmVzIGluY2lkZW50cyBiZWNvbWVzIGN1bHR1cmU=";
@@ -169,7 +167,7 @@ footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
   function revealWisdom(){
     const bin = atob(WISDOM_B64);
     const bytes = new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+    for (let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
     wisdomText.textContent = new TextDecoder("utf-8").decode(bytes);
   }
 
@@ -192,9 +190,7 @@ footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
       const d = atob("Y2hhcmxlcy5lbWFpbA==");
       const subject = encodeURIComponent("Puzzle solved");
       const body = encodeURIComponent(
-        "Hi Charles,\n\n" +
-        "I solved the puzzle on your site.\n\n" +
-        "Cheers,"
+        "Hi Charles,\n\nI solved the puzzle on your site.\n\nCheers,"
       );
       location.href = `mailto:${u}@${d}?subject=${subject}&body=${body}`;
     };
@@ -203,7 +199,6 @@ footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
 
   check.onclick = async () => {
     check.disabled = true;
-
     try {
       const h = await sha256Hex(normalize(answer.value));
       if (h === EXPECTED_SHA256_HEX){
