@@ -1,394 +1,213 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Charles</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Some things reveal themselves only when tested." />
+<meta charset="utf-8" />
+<title>Charles</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <style>
-    :root{
-      --bg:#0b1020;
-      --panel:rgba(255,255,255,.06);
-      --text:#e9ecf6;
-      --muted:rgba(233,236,246,.75);
-      --faint:rgba(233,236,246,.55);
-      --line:rgba(233,236,246,.12);
-      --ok:#7ee787;
-      --warn:#f2cc60;
-      --shadow:0 25px 70px rgba(0,0,0,.45);
-      --radius:16px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:
-        radial-gradient(1200px 700px at 20% 10%, rgba(154,163,255,.18), transparent 60%),
-        radial-gradient(900px 600px at 85% 40%, rgba(126,231,135,.10), transparent 55%),
-        var(--bg);
-      color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:32px 16px;
-    }
-    .wrap{width:min(900px,100%);display:grid;gap:16px}
-    .card{
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    header{padding:26px}
-    h1{margin:0;font-size:22px;font-weight:700}
-    .subtitle{margin:4px 0 0;color:var(--muted);font-size:13.5px}
-    .grid{display:grid;grid-template-columns:1fr;gap:16px;padding:0 26px 26px}
-    .panel{padding:18px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.16)}
-    .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:0 0 10px}
-    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
-    .tiny{font-size:12.5px;color:var(--faint)}
-    .ok{color:var(--ok)}
-    .warn{color:var(--warn)}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .btn{
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.06);
-      color:var(--text);
-      border-radius:12px;
-      padding:10px 12px;
-      font-size:13px;
-      cursor:pointer;
-      display:inline-block;
-    }
-    .btn[disabled]{opacity:.55;cursor:not-allowed}
-    input{
-      background:rgba(0,0,0,.22);
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px 12px;
-      color:var(--text);
-      font-family:ui-monospace,Menlo,Consolas,monospace;
-    }
-    footer{
-      padding:14px 26px 22px;
-      border-top:1px solid var(--line);
-      display:flex;
-      justify-content:center;
-      font-size:12px;
-      color:var(--faint);
-    }
-    .toast{
-      position:fixed;
-      bottom:18px;
-      left:50%;
-      transform:translateX(-50%);
-      background:rgba(0,0,0,.75);
-      border:1px solid var(--line);
-      padding:10px 14px;
-      border-radius:999px;
-      font-size:12.5px;
-      opacity:0;
-      transition:.2s;
-      pointer-events:none;
-    }
-    .toast.show{opacity:1}
+<style>
+:root{
+  --bg:#0b1020;
+  --panel:rgba(255,255,255,.06);
+  --text:#e9ecf6;
+  --muted:rgba(233,236,246,.7);
+  --line:rgba(233,236,246,.12);
+  --ok:#7ee787;
+  --warn:#f2cc60;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+.card{
+  width:min(900px,100%);
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+header{padding:24px}
+.grid{padding:0 24px 24px;display:grid;gap:16px}
+.panel{
+  background:rgba(0,0,0,.25);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:18px;
+}
+.label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.btn{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  border-radius:12px;
+  padding:10px 12px;
+  cursor:pointer;
+}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input{
+  background:rgba(0,0,0,.3);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 12px;
+  color:var(--text);
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+}
+.ok{color:var(--ok)}
+.warn{color:var(--warn)}
+footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
 
-    .modalBackdrop{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,.55);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-    }
-    .modal{
-      width:min(560px,100%);
-      background:rgba(10,14,28,.92);
-      border:1px solid var(--line);
-      border-radius:16px;
-      box-shadow:var(--shadow);
-      padding:18px;
-    }
-    .modal h2{margin:0 0 6px;font-size:16px}
-    .modal p{margin:0 0 12px;color:var(--muted);font-size:13.5px}
-    .modal .actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
-    .kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:8px;padding:2px 8px;background:rgba(255,255,255,.04);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--muted)}
-  </style>
+/* Modal fully covering wisdom panel */
+.modalCover{
+  position:absolute;
+  inset:0;
+  background:rgba(5,8,20,.96);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
+}
+.modalBox{
+  width:100%;
+  max-width:100%;
+  background:rgba(0,0,0,.4);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:18px;
+}
+</style>
 </head>
 
 <body>
-<main class="wrap">
-  <section class="card">
-    <header>
-      <h1>Charles</h1>
-      <p class="subtitle">Some things reveal themselves only when tested.</p>
-    </header>
+<section class="card">
+  <header>
+    <h1>Charles</h1>
+    <p class="mono" style="color:var(--muted)">Some things reveal themselves only when tested.</p>
+  </header>
 
-    <div class="grid">
-      <section class="panel">
-        <p class="label">Puzzle</p>
-        <p class="subtitle">Decode this. Hint: <span class="mono">ROT13</span></p>
-
-        <div class="row">
-          <span class="mono">lbh_sbhaq_vg</span>
-          <input id="answer" placeholder="decoded text" />
-          <button class="btn" id="check">Check</button>
-        </div>
-
-        <p id="status" class="mono tiny" style="margin-top:10px">
-          solve the puzzle → unlock what follows
-        </p>
-      </section>
-
-      <aside class="panel" id="wisdom" style="display:none">
-        <p class="label">Unlocked</p>
-        <p class="subtitle">You noticed.</p>
-        <pre id="wisdomText" class="mono" style="white-space:pre-wrap;margin:0"></pre>
-
-        <div style="margin-top:14px">
-          <p class="tiny" style="margin:0 0 8px;color:var(--muted)">
-            If you want, you can notify me that you solved it.
-          </p>
-          <div id="contactMount"></div>
-          <p id="contactStatus" class="mono tiny" style="margin-top:8px"></p>
-        </div>
-      </aside>
-    </div>
-
-    <footer><span class="mono">Can you solve the puzzle?</span></footer>
-  </section>
-</main>
-
-<div class="toast" id="toast">Unlocked.</div>
-
-<div class="modalBackdrop" id="modalBackdrop" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mh" aria-describedby="md">
-    <h2 id="mh">One more step</h2>
-    <p id="md">Quick proof you’re human: answer the prompt below and press <span class="kbd">Enter</span>.</p>
-
-    <div class="panel" style="margin:0; padding:14px">
-      <p class="label" style="margin-bottom:8px">Proof-of-human</p>
+  <div class="grid">
+    <section class="panel">
+      <p class="label">Puzzle</p>
       <div class="row">
-        <span class="mono" id="humanQ">…</span>
-        <input id="humanA" inputmode="numeric" placeholder="answer" />
+        <span class="mono">lbh_sbhaq_vg</span>
+        <input id="answer" placeholder="decoded text">
+        <button class="btn" id="check">Check</button>
       </div>
-      <p class="mono tiny" id="humanStatus" style="margin:10px 0 0;color:var(--faint)"></p>
-    </div>
+      <p id="status" class="mono" style="margin-top:8px;color:var(--muted)">
+        solve the puzzle → unlock what follows
+      </p>
+    </section>
 
-    <div class="actions" style="margin-top:12px">
-      <button class="btn" id="humanCancel" type="button">Not now</button>
-      <button class="btn" id="humanVerify" type="button">Verify</button>
-    </div>
+    <section class="panel" id="wisdomPanel" style="display:none;position:relative">
+      <p class="label">Unlocked</p>
+      <pre id="wisdomText" class="mono" style="white-space:pre-wrap;margin:0"></pre>
+
+      <div style="margin-top:14px">
+        <div id="contactMount"></div>
+        <p id="contactStatus" class="mono" style="margin-top:8px;color:var(--muted)"></p>
+      </div>
+
+      <!-- Human challenge overlay -->
+      <div class="modalCover" id="humanModal">
+        <div class="modalBox">
+          <p class="label">One more step</p>
+          <div class="row">
+            <span class="mono" id="humanQ">…</span>
+            <input id="humanA" inputmode="numeric" placeholder="answer">
+            <button class="btn" id="humanCheck">Verify</button>
+          </div>
+          <p id="humanStatus" class="mono" style="margin-top:8px;color:var(--muted)"></p>
+        </div>
+      </div>
+    </section>
   </div>
-</div>
+
+  <footer>Can you solve the puzzle?</footer>
+</section>
 
 <script>
 (() => {
   const EXPECTED = "you_found_it";
 
-  const input = document.getElementById("answer");
+  const WISDOM_B64 =
+"4oCiIGluY2VudGl2ZXMgb3V0bGl2ZSBpbnRlbnRpb25zCuiigKggYXV0aG9yaXR5IGlzIHBhcnQgb2YgdGhlIHRocmVhdCBtb2RlbArogoggZXZlcnkgY29udHJvbCBkZWNheXM K4oCiIHJlc2lsaWVuY2UgaXMgZGVzaWduZWQgYmVmb3JlIGl0IGlzIHRlc3RlZArogoggd2hhdCBzdXJ2aXZlcyBpbmNpZGVudHMgYmVjb21lcyBjdWx0dXJlCgpQcm9waGVjeToKVGhlIG5leHQgZmFpbHVyZSB3b27igJl0IGNvbWUgZnJvbSB3aGF0IHlvdSBmb3Jnb3QgdG8gc2VjdXJlLApidXQgZnJvbSB3aGF0IHlvdSBhc3N1bWVkIHdvdWxkIG5ldmVyIGJlIHF1ZXN0aW9uZWQu";
+
+  const answer = document.getElementById("answer");
   const check = document.getElementById("check");
   const status = document.getElementById("status");
-  const wisdom = document.getElementById("wisdom");
+  const wisdomPanel = document.getElementById("wisdomPanel");
   const wisdomText = document.getElementById("wisdomText");
-  const toast = document.getElementById("toast");
 
   const contactMount = document.getElementById("contactMount");
   const contactStatus = document.getElementById("contactStatus");
 
-  const modalBackdrop = document.getElementById("modalBackdrop");
+  const modal = document.getElementById("humanModal");
   const humanQ = document.getElementById("humanQ");
   const humanA = document.getElementById("humanA");
-  const humanVerify = document.getElementById("humanVerify");
-  const humanCancel = document.getElementById("humanCancel");
+  const humanCheck = document.getElementById("humanCheck");
   const humanStatus = document.getElementById("humanStatus");
 
-  let solved = false;
-  let humanVerified = false;
+  let a=0,b=0;
 
-  function normalize(s){ return s.trim().toLowerCase().replace(/\s+/g,"_"); }
-  function showToast(msg){
-    toast.textContent = msg;
-    toast.classList.add("show");
-    setTimeout(()=>toast.classList.remove("show"),1200);
-  }
+  function normalize(s){return s.trim().toLowerCase().replace(/\s+/g,"_");}
 
-  function openModal(){
-    modalBackdrop.style.display = "flex";
-    modalBackdrop.setAttribute("aria-hidden","false");
-    humanA.value = "";
-    humanA.focus();
-  }
-  function closeModal(){
-    modalBackdrop.style.display = "none";
-    modalBackdrop.setAttribute("aria-hidden","true");
-  }
-
-  let a=0,b=0,expectedSum=0;
-  function newHumanChallenge(){
+  function showHuman(){
     a = 10 + Math.floor(Math.random()*40);
     b = 10 + Math.floor(Math.random()*40);
-    expectedSum = a + b;
     humanQ.textContent = `${a} + ${b} = ?`;
+    humanA.value = "";
     humanStatus.textContent = "";
+    modal.style.display = "flex";
   }
 
-  function r(s){ return s.split("").reverse().join(""); }
-
-  function dayIndexUTC(){
-    const now = new Date();
-    const start = Date.UTC(now.getUTCFullYear(), 0, 1);
-    const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-    return Math.floor((today - start) / 86400000);
+  function revealWisdom(){
+    wisdomText.textContent = atob(WISDOM_B64);
   }
-
-  function d(b64){
-    let x;
-    try { x = atob(b64); } catch { return null; }
-    if (/^[A-Za-z0-9+/]+={0,2}$/.test(x) && x.length % 4 === 0) {
-      try { return atob(x); } catch { return x; }
-    }
-    return x;
-  }
-
-  const ROT = [
-    { u:"c2VscmFoYw==", d:"bGlhbWUuc2VscmFoYw==" },
-    { u:"YzJWc2NtRm9Zdz09", d:"YkdsaGJXVXVjMlZzY21Gb1l3PT0=" },
-    { u:"c2VscmFoYw==", d:"bGlhbWUuc2VscmFoYw==" },
-    { u:"YzJWc2NtRm9Zdz09", d:"YkdsaGJXVXVjMlZzY21Gb1l3PT0=" },
-    { u:"c2VscmFoYw==", d:"bGlhbWUuc2VscmFoYw==" },
-    { u:"YzJWc2NtRm9Zdz09", d:"YkdsaGJXVXVjMlZzY21Gb1l3PT0=" }
-  ];
-
-  function pickRotation(){ return ROT[dayIndexUTC() % ROT.length]; }
-
-  function buildMailto(){
-    const rot = pickRotation();
-    const u = d(rot.u);
-    const v = d(rot.d);
-    if (!u || !v) return null;
-
-    const user = r(u);
-    const domain = r(v);
-    const at = String.fromCharCode(64);
-
-    const subject = encodeURIComponent("Solved your puzzle");
-    const body = encodeURIComponent(
-      "Hi Charles,\n\nI solved the puzzle.\n\nAnswer: you_found_it\n\nCheers,"
-    );
-    return `mailto:${user}${at}${domain}?subject=${subject}&body=${body}`;
-  }
-
-  function clearContact(){ contactMount.textContent = ""; contactStatus.textContent = ""; }
 
   function renderContact(){
-    clearContact();
-    if (!solved) return;
-
-    if (!humanVerified) {
-      const b = document.createElement("button");
-      b.className = "btn";
-      b.type = "button";
-      b.textContent = "Verify to notify";
-      b.addEventListener("click", () => { newHumanChallenge(); openModal(); });
-      contactMount.appendChild(b);
-      return;
-    }
-
-    const b = document.createElement("button");
-    b.className = "btn";
-    b.type = "button";
-    b.textContent = "Email me you solved it";
-    b.addEventListener("click", () => {
-      contactStatus.className = "mono tiny";
-      contactStatus.textContent = "Opening…";
-      setTimeout(() => {
-        const href = buildMailto();
-        if (!href) {
-          contactStatus.className = "mono tiny warn";
-          contactStatus.textContent = "Could not open mail client.";
-          return;
-        }
-        location.href = href;
-        contactStatus.className = "mono tiny ok";
-        contactStatus.textContent = "Done.";
-      }, 350);
-    });
-    contactMount.appendChild(b);
-  }
-
-  function b64ToBytes(b64){
-    const bin = atob(b64);
-    const out = new Uint8Array(bin.length);
-    for (let i=0;i<bin.length;i++) out[i] = bin.charCodeAt(i);
-    return out;
-  }
-  function x(bytes, k){
-    const out = new Uint8Array(bytes.length);
-    for (let i=0;i<bytes.length;i++) out[i] = bytes[i] ^ k[i % k.length];
-    return out;
-  }
-
-  function reveal(){
-    const blob =
-      "m+/Xfw8BFgsKKwACGRhZAAArCgYDC0Q2BwAZBQ0GGjEVZZfuxn8IAQgDFh0cKx9PHB1ELwgGCEsWCVUrFQ0MCR1YGl0EBA0YHkYRFgYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw4=";
-
-    const key = new TextEncoder().encode(EXPECTED + "|k");
-    const dec = x(b64ToBytes(blob), key);
-    return new TextDecoder().decode(dec);
+    contactMount.innerHTML = "";
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.textContent = "Email me you solved it";
+    btn.onclick = () => {
+      const u = atob("Y2hhcmxlcw==").split("").reverse().reverse().join("");
+      const d = atob("Y2hhcmxlcy5lbWFpbA==");
+      location.href = `mailto:${u}@${d}?subject=Solved your puzzle`;
+    };
+    contactMount.appendChild(btn);
   }
 
   check.onclick = () => {
-    if (normalize(input.value) === EXPECTED){
-      solved = true;
-
-      wisdomText.textContent = reveal();
-      wisdom.style.display = "block";
-      wisdom.scrollIntoView({behavior:"smooth"});
-
-      status.className = "mono tiny ok";
+    if (normalize(answer.value) === EXPECTED){
+      status.className = "mono ok";
       status.textContent = "Correct.";
-
-      showToast("Unlocked.");
-      renderContact();
-
-      newHumanChallenge();
-      openModal();
+      revealWisdom();
+      wisdomPanel.style.display = "block";
+      showHuman();
     } else {
-      status.className = "mono tiny warn";
+      status.className = "mono warn";
       status.textContent = "Not quite.";
     }
   };
 
-  function verifyHuman(){
-    const v = Number(String(humanA.value || "").trim());
-    if (v === expectedSum) {
-      humanVerified = true;
-      humanStatus.className = "mono tiny ok";
-      humanStatus.textContent = "Verified.";
-      closeModal();
-      showToast("Verified.");
+  humanCheck.onclick = () => {
+    if (Number(humanA.value) === a + b){
+      modal.style.display = "none";
       renderContact();
     } else {
-      humanStatus.className = "mono tiny warn";
+      humanStatus.className = "mono warn";
       humanStatus.textContent = "Try again.";
     }
-  }
-
-  humanVerify.addEventListener("click", verifyHuman);
-  humanCancel.addEventListener("click", () => closeModal());
-  humanA.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") verifyHuman();
-    if (e.key === "Escape") closeModal();
-  });
-  modalBackdrop.addEventListener("click", (e) => {
-    if (e.target === modalBackdrop) closeModal();
-  });
-
-  renderContact();
+  };
 })();
 </script>
 </body>
