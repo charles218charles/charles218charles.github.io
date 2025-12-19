@@ -19,7 +19,6 @@
       --shadow:0 25px 70px rgba(0,0,0,.45);
       --radius:16px;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
@@ -35,7 +34,6 @@
       justify-content:center;
       padding:32px 16px;
     }
-
     .wrap{width:min(900px,100%);display:grid;gap:16px}
     .card{
       background:var(--panel);
@@ -44,11 +42,9 @@
       box-shadow:var(--shadow);
       overflow:hidden;
     }
-
     header{padding:26px}
     h1{margin:0;font-size:22px;font-weight:700}
     .subtitle{margin:4px 0 0;color:var(--muted);font-size:13.5px}
-
     .grid{display:grid;grid-template-columns:1fr;gap:16px;padding:0 26px 26px}
     .panel{padding:18px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.16)}
     .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:0 0 10px}
@@ -56,9 +52,7 @@
     .tiny{font-size:12.5px;color:var(--faint)}
     .ok{color:var(--ok)}
     .warn{color:var(--warn)}
-
     .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-
     .btn{
       border:1px solid var(--line);
       background:rgba(255,255,255,.06);
@@ -70,7 +64,6 @@
       display:inline-block;
     }
     .btn[disabled]{opacity:.55;cursor:not-allowed}
-
     input{
       background:rgba(0,0,0,.22);
       border:1px solid var(--line);
@@ -79,7 +72,6 @@
       color:var(--text);
       font-family:ui-monospace,Menlo,Consolas,monospace;
     }
-
     footer{
       padding:14px 26px 22px;
       border-top:1px solid var(--line);
@@ -88,7 +80,6 @@
       font-size:12px;
       color:var(--faint);
     }
-
     .toast{
       position:fixed;
       bottom:18px;
@@ -156,11 +147,10 @@
         <p class="label">Unlocked</p>
         <p class="subtitle">You noticed.</p>
 
-        <!-- Intentionally empty; content is injected only after solve -->
         <pre id="wisdomText" class="mono" style="white-space:pre-wrap;margin:0"></pre>
 
         <div style="margin-top:14px">
-          <p class="tiny" id="contactHint" style="margin:0 0 8px;color:var(--muted)">
+          <p class="tiny" style="margin:0 0 8px;color:var(--muted)">
             If you want, you can notify me that you solved it.
           </p>
           <div id="contactMount"></div>
@@ -180,9 +170,7 @@
 <div class="modalBackdrop" id="modalBackdrop" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mh" aria-describedby="md">
     <h2 id="mh">One more step</h2>
-    <p id="md">
-      Quick proof you’re human: answer the prompt below and press <span class="kbd">Enter</span>.
-    </p>
+    <p id="md">Quick proof you’re human: answer the prompt below and press <span class="kbd">Enter</span>.</p>
 
     <div class="panel" style="margin:0; padding:14px">
       <p class="label" style="margin-bottom:8px">Proof-of-human</p>
@@ -260,7 +248,7 @@
     return Math.floor((today - start) / 86400000);
   }
 
-  function maybeDoubleDecode(b64){
+  function maybeDecode(b64){
     let first;
     try { first = atob(b64); } catch { return null; }
     if (/^[A-Za-z0-9+/]+={0,2}$/.test(first) && first.length % 4 === 0) {
@@ -279,18 +267,17 @@
   ];
 
   function pickRotation(){
-    const idx = dayIndexUTC() % ROT.length;
-    return ROT[idx];
+    return ROT[dayIndexUTC() % ROT.length];
   }
 
   function buildMailto(){
     const rot = pickRotation();
-    const uRev = maybeDoubleDecode(rot.u);
-    const dRev = maybeDoubleDecode(rot.d);
-    if (!uRev || !dRev) return null;
+    const u = maybeDecode(rot.u);
+    const d = maybeDecode(rot.d);
+    if (!u || !d) return null;
 
-    const user = reverseString(uRev);
-    const domain = reverseString(dRev);
+    const user = reverseString(u);
+    const domain = reverseString(d);
     const at = String.fromCharCode(64);
     const addr = `${user}${at}${domain}`;
 
@@ -342,41 +329,31 @@
     contactMount.appendChild(btn);
   }
 
-  function xorBytes(bytes, keyBytes){
-    const out = new Uint8Array(bytes.length);
-    for (let i=0;i<bytes.length;i++){
-      out[i] = bytes[i] ^ keyBytes[i % keyBytes.length];
-    }
-    return out;
-  }
-
-  function utf8ToBytes(s){ return new TextEncoder().encode(s); }
-  function bytesToUtf8(b){ return new TextDecoder().decode(b); }
-
   function b64ToBytes(b64){
     const bin = atob(b64);
     const out = new Uint8Array(bin.length);
     for (let i=0;i<bin.length;i++) out[i] = bin.charCodeAt(i);
     return out;
   }
-
-  function revealWisdom(keyStr){
-    const key = utf8ToBytes(keyStr + "|k");
-    const blob = "WU8QG1wGCg0ACwEJQkYHBQ0VQ1xQGxwXDg0QEgEFXU8QG1wGCg0ACwEJQkYHAg0fQ1xQGxwXDg0QEgEFXU8QG1wGCg0ACwEJQkYHAQ0ZQ1xQGxwXDg0QEgEFXU8QG1wGCg0ACwEJQkYHAA0DQ1xQGxwXDg0QEgEFXU8QG1wGCg0ACwEJQkYHBA0cQ1xQGxwXDg0QEgEFXU8QG1wGCg0ACwEJQkYHAg0DQ1xQGxwXDg0QEgEFXU8QG1wGCg0ACwEJQkYHAA0cQ1xQGxwXDg0QEgEF";
-    const enc = b64ToBytes(blob);
-    const dec = xorBytes(enc, key);
-    return bytesToUtf8(dec);
+  function bytesToUtf8(bytes){ return new TextDecoder().decode(bytes); }
+  function keyBytes(s){ return new TextEncoder().encode(s); }
+  function x(bytes, k){
+    const out = new Uint8Array(bytes.length);
+    for (let i=0;i<bytes.length;i++) out[i] = bytes[i] ^ k[i % k.length];
+    return out;
   }
 
-  function setWisdom(){
-    // Derived from the expected answer; avoids plain text in HTML
-    wisdomText.textContent = revealWisdom(EXPECTED);
+  function revealText(){
+    const blob = "m+/Xfw8BFgsKKwACGRhZAAArCgYDC0Q2BwAZBQ0GGjEVZZfuxn8IAQgDFh0cKx9PHB1ELwgGCEsWCVUrFQ0MCR1YGl0EBA0YHkYRFgYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw5bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw9bQ1cQGg8eJgkZGBkYB14WCEYfQxEOBhYCHw4=";
+    const k = keyBytes(EXPECTED + "|k");
+    const dec = x(b64ToBytes(blob), k);
+    return bytesToUtf8(dec);
   }
 
   check.onclick = () => {
     if (normalize(input.value) === EXPECTED){
       solved = true;
-      setWisdom();
+      wisdomText.textContent = revealText();
 
       wisdom.style.display = "block";
       wisdom.scrollIntoView({behavior:"smooth"});
@@ -415,7 +392,6 @@
     if (e.key === "Enter") verifyHuman();
     if (e.key === "Escape") closeModal();
   });
-
   modalBackdrop.addEventListener("click", (e) => {
     if (e.target === modalBackdrop) closeModal();
   });
