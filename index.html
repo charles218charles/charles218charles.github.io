@@ -178,7 +178,7 @@ but from what you assumed would never be questioned.
 (() => {
   const EXPECTED = "you_found_it";
 
-  /* 🔧 REPLACE THESE TWO VALUES */
+  /* 🔧 REPLACE THESE */
   const WORKER_URL = "https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev/";
   const NOTIFY_SECRET = "PUT_THE_SAME_SECRET_AS_IN_CLOUDFLARE";
 
@@ -196,6 +196,7 @@ but from what you assumed would never be questioned.
 
   async function notifySolved(){
     notifyBtn.disabled = true;
+    notifyStatus.style.color = "var(--faint)";
     notifyStatus.textContent = "Sending…";
 
     try {
@@ -211,13 +212,18 @@ but from what you assumed would never be questioned.
         })
       });
 
-      if (!r.ok) throw new Error("failed");
+      const text = await r.text();
+
+      if (!r.ok) {
+        throw new Error(`HTTP ${r.status}: ${text || "no response body"}`);
+      }
 
       notifyStatus.style.color = "var(--ok)";
       notifyStatus.textContent = "Sent.";
-    } catch {
+    } catch (e) {
+      console.error("Notify failed:", e);
       notifyStatus.style.color = "var(--warn)";
-      notifyStatus.textContent = "Could not send right now.";
+      notifyStatus.textContent = String(e.message || e);
       notifyBtn.disabled = false;
     }
   }
