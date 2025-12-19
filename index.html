@@ -5,21 +5,13 @@
   <title>Charles</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Some things reveal themselves only when tested." />
-
   <style>
     :root{
-      --bg:#0b1020;
-      --panel:rgba(255,255,255,.06);
-      --text:#e9ecf6;
-      --muted:rgba(233,236,246,.75);
-      --faint:rgba(233,236,246,.55);
-      --line:rgba(233,236,246,.12);
-      --ok:#7ee787;
-      --warn:#f2cc60;
-      --shadow:0 25px 70px rgba(0,0,0,.45);
-      --radius:16px;
+      --bg:#0b1020; --panel:rgba(255,255,255,.06); --text:#e9ecf6;
+      --muted:rgba(233,236,246,.75); --faint:rgba(233,236,246,.55);
+      --line:rgba(233,236,246,.12); --ok:#7ee787; --warn:#f2cc60;
+      --shadow:0 25px 70px rgba(0,0,0,.45); --radius:16px;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
@@ -30,90 +22,22 @@
         var(--bg);
       color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      display:flex;align-items:center;justify-content:center;
       padding:32px 16px;
     }
-
     .wrap{width:min(900px,100%);display:grid;gap:16px}
-    .card{
-      background:var(--panel);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
     header{padding:26px}
     h1{margin:0;font-size:22px;font-weight:700}
     .subtitle{margin:4px 0 0;color:var(--muted);font-size:13.5px}
-
-    .grid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:16px;
-      padding:0 26px 26px;
-    }
-
-    .panel{
-      padding:18px;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.16);
-    }
-
-    .label{
-      font-size:12px;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color:var(--faint);
-      margin:0 0 10px;
-    }
-
+    .grid{display:grid;grid-template-columns:1fr;gap:16px;padding:0 26px 26px}
+    .panel{padding:18px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.16)}
+    .label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:0 0 10px}
     .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
-
-    .btn{
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.06);
-      color:var(--text);
-      border-radius:12px;
-      padding:10px 12px;
-      font-size:13px;
-      cursor:pointer;
-    }
-
-    input{
-      background:rgba(0,0,0,.22);
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px 12px;
-      color:var(--text);
-      font-family:ui-monospace,Menlo,Consolas,monospace;
-    }
-
-    footer{
-      padding:14px 26px 22px;
-      border-top:1px solid var(--line);
-      display:flex;
-      justify-content:center;
-      font-size:12px;
-      color:var(--faint);
-    }
-
-    .toast{
-      position:fixed;
-      bottom:18px;
-      left:50%;
-      transform:translateX(-50%);
-      background:rgba(0,0,0,.75);
-      border:1px solid var(--line);
-      padding:10px 14px;
-      border-radius:999px;
-      font-size:12.5px;
-      opacity:0;
-      transition:.2s;
-    }
+    .btn{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer}
+    input{background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--text);font-family:ui-monospace,Menlo,Consolas,monospace}
+    footer{padding:14px 26px 22px;border-top:1px solid var(--line);display:flex;justify-content:center;font-size:12px;color:var(--faint)}
+    .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid var(--line);padding:10px 14px;border-radius:999px;font-size:12.5px;opacity:0;transition:.2s}
     .toast.show{opacity:1}
   </style>
 </head>
@@ -166,9 +90,7 @@ but from what you assumed would never be questioned.
       </aside>
     </div>
 
-    <footer>
-      <span class="mono">Can you solve the puzzle?</span>
-    </footer>
+    <footer><span class="mono">Can you solve the puzzle?</span></footer>
   </section>
 </main>
 
@@ -178,12 +100,11 @@ but from what you assumed would never be questioned.
 (() => {
   const EXPECTED = "you_found_it";
 
-  // ✅ Your Worker endpoint
+  // ✅ Your Worker
   const WORKER_URL = "https://jolly-grass-36e9.ch-e92.workers.dev/";
 
-  // 🔧 If your Worker requires the secret header, set it here.
-  // If you *don’t* require it, you can leave this as "" and the code won’t send the header.
-  const NOTIFY_SECRET = "";
+  // ✅ MUST match Cloudflare Worker secret NOTIFY_SECRET
+  const NOTIFY_SECRET = "b3f2d8a1e6c94f7bb8c0b8c1c5d4a9e2";
 
   const input = document.getElementById("answer");
   const check = document.getElementById("check");
@@ -193,33 +114,25 @@ but from what you assumed would never be questioned.
   const notifyBtn = document.getElementById("notifyBtn");
   const notifyStatus = document.getElementById("notifyStatus");
 
-  function normalize(s){
-    return s.trim().toLowerCase().replace(/\s+/g,"_");
-  }
+  function normalize(s){ return s.trim().toLowerCase().replace(/\s+/g,"_"); }
 
   async function notifySolved(){
     notifyBtn.disabled = true;
     notifyStatus.style.color = "var(--faint)";
     notifyStatus.textContent = "Sending…";
 
-    const headers = { "Content-Type": "application/json" };
-    if (NOTIFY_SECRET) headers["X-Notify-Secret"] = NOTIFY_SECRET;
-
     try {
       const r = await fetch(WORKER_URL, {
         method: "POST",
-        headers,
-        body: JSON.stringify({
-          answer: EXPECTED,
-          page: location.href
-        })
+        headers: {
+          "Content-Type": "application/json",
+          "X-Notify-Secret": NOTIFY_SECRET
+        },
+        body: JSON.stringify({ answer: EXPECTED, page: location.href })
       });
 
       const text = await r.text();
-
-      if (!r.ok) {
-        throw new Error(`HTTP ${r.status}: ${text || "no response body"}`);
-      }
+      if (!r.ok) throw new Error(`HTTP ${r.status}: ${text || "no response body"}`);
 
       notifyStatus.style.color = "var(--ok)";
       notifyStatus.textContent = "Sent.";
@@ -237,9 +150,7 @@ but from what you assumed would never be questioned.
       wisdom.scrollIntoView({behavior:"smooth"});
       status.style.color = "var(--ok)";
       status.textContent = "Correct.";
-
       notifyBtn.style.display = "inline-block";
-
       toast.classList.add("show");
       setTimeout(()=>toast.classList.remove("show"),1200);
     } else {
