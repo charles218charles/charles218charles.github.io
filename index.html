@@ -178,9 +178,12 @@ but from what you assumed would never be questioned.
 (() => {
   const EXPECTED = "you_found_it";
 
-  /* 🔧 REPLACE THESE */
-  const WORKER_URL = "https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev/";
-  const NOTIFY_SECRET = "PUT_THE_SAME_SECRET_AS_IN_CLOUDFLARE";
+  // ✅ Your Worker endpoint
+  const WORKER_URL = "https://jolly-grass-36e9.ch-e92.workers.dev/";
+
+  // 🔧 If your Worker requires the secret header, set it here.
+  // If you *don’t* require it, you can leave this as "" and the code won’t send the header.
+  const NOTIFY_SECRET = "";
 
   const input = document.getElementById("answer");
   const check = document.getElementById("check");
@@ -199,13 +202,13 @@ but from what you assumed would never be questioned.
     notifyStatus.style.color = "var(--faint)";
     notifyStatus.textContent = "Sending…";
 
+    const headers = { "Content-Type": "application/json" };
+    if (NOTIFY_SECRET) headers["X-Notify-Secret"] = NOTIFY_SECRET;
+
     try {
       const r = await fetch(WORKER_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Notify-Secret": NOTIFY_SECRET
-        },
+        headers,
         body: JSON.stringify({
           answer: EXPECTED,
           page: location.href
@@ -223,7 +226,7 @@ but from what you assumed would never be questioned.
     } catch (e) {
       console.error("Notify failed:", e);
       notifyStatus.style.color = "var(--warn)";
-      notifyStatus.textContent = String(e.message || e);
+      notifyStatus.textContent = `${e?.name || "Error"}: ${e?.message || String(e)}`;
       notifyBtn.disabled = false;
     }
   }
