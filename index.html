@@ -15,6 +15,7 @@
       --bg2: #f2f2f2;
       --bg3: #ededed;
       --fg: #111;
+      --dot-size: 12px;
     }
 
     body {
@@ -43,48 +44,73 @@
       user-select: none;
     }
 
-    /* Keep width/spacing of the real period, but hide it */
-    .period-anchor {
-      opacity: 0;
-    }
-
-    /* Use dotless i so there is no native i-dot to fight with */
-    .i-wrap {
+    /* Explicit period slot */
+    .period-slot {
       position: relative;
       display: inline-block;
+      width: 0.30em;          /* spacing between charles and email */
+      height: 1em;
+      vertical-align: baseline;
     }
 
-    /* Invisible anchor for where the i dot should live */
+    .period-home {
+      position: absolute;
+      left: 50%;
+      bottom: 0.13em;         /* tune period resting height */
+      width: 0.16em;
+      height: 0.16em;
+      transform: translateX(-50%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Explicit i construction */
+    .i-letter {
+      position: relative;
+      display: inline-block;
+      width: 0.28em;
+      height: 1em;
+      vertical-align: baseline;
+    }
+
+    .i-stem {
+      position: absolute;
+      left: 50%;
+      bottom: 0.02em;
+      width: 0.10em;
+      height: 0.62em;
+      transform: translateX(-50%);
+      background: var(--fg);
+      border-radius: 0.05em;
+    }
+
     .i-home {
       position: absolute;
       left: 50%;
-      top: 0.02em;
-      width: 0.18em;
-      height: 0.18em;
-      transform: translate(-50%, -100%);
+      top: 0.02em;            /* tune i-dot resting height */
+      width: 0.16em;
+      height: 0.16em;
+      transform: translate(-50%, 0);
       opacity: 0;
       pointer-events: none;
     }
 
     .dot {
       position: absolute;
-      width: 12px;
-      height: 12px;
-      margin-left: -6px;
-      margin-top: -6px;
+      width: var(--dot-size);
+      height: var(--dot-size);
+      margin-left: calc(var(--dot-size) / -2);
+      margin-top: calc(var(--dot-size) / -2);
       border-radius: 50%;
       background: var(--fg);
       z-index: 3;
       pointer-events: none;
-      box-shadow: 0 0 0 2px rgba(255,255,255,0.9);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.92);
     }
 
     @media (max-width: 700px) {
-      .dot {
-        width: 10px;
-        height: 10px;
-        margin-left: -5px;
-        margin-top: -5px;
+      :root {
+        --dot-size: 10px;
       }
     }
 
@@ -98,7 +124,7 @@
 <body>
   <div class="scene" id="scene">
     <div class="mark" id="mark" aria-label="charles.email">
-      charles<span class="period-anchor" id="periodAnchor">.</span>ema<span class="i-wrap">ı<span class="i-home" id="iHome"></span></span>l
+      charles<span class="period-slot"><span class="period-home" id="periodHome"></span></span>ema<span class="i-letter"> <span class="i-stem"></span><span class="i-home" id="iHome"></span></span>l
     </div>
 
     <div class="dot" id="dotPeriod" aria-hidden="true"></div>
@@ -108,14 +134,13 @@
   <script>
     const scene = document.getElementById('scene');
     const mark = document.getElementById('mark');
-    const periodAnchor = document.getElementById('periodAnchor');
-    const iHome = document.getElementById('iHome');
+    const periodHomeEl = document.getElementById('periodHome');
+    const iHomeEl = document.getElementById('iHome');
     const dotPeriod = document.getElementById('dotPeriod');
     const dotI = document.getElementById('dotI');
 
-    const cycleMs = 5000;      // 4s orbit + 1s hold
+    const cycleMs = 5000;   // 4s orbit + 1s hold
     const moveMs = 4000;
-    const holdMs = 1000;
 
     let homePeriod = { x: 0, y: 0 };
     let homeI = { x: 0, y: 0 };
@@ -133,11 +158,8 @@
 
     function buildOrbit(home, rx, ry, rotationDeg, direction = 1) {
       const rot = rotationDeg * Math.PI / 180;
-
-      // Start of ellipse is always the home point
       const cx = home.x - rx * Math.cos(rot);
       const cy = home.y - rx * Math.sin(rot);
-
       return { home, cx, cy, rx, ry, rot, direction };
     }
 
@@ -154,9 +176,14 @@
       };
     }
 
+    function renderDot(el, p) {
+      el.style.left = `${p.x}px`;
+      el.style.top = `${p.y}px`;
+    }
+
     function layout() {
-      homePeriod = centerOf(periodAnchor);
-      homeI = centerOf(iHome);
+      homePeriod = centerOf(periodHomeEl);
+      homeI = centerOf(iHomeEl);
 
       const mr = mark.getBoundingClientRect();
       const width = mr.width;
@@ -164,9 +191,9 @@
 
       orbit1 = buildOrbit(
         homePeriod,
-        width * 0.52,
-        height * 1.35,
-        -8,
+        width * 0.50,
+        height * 1.30,
+        -10,
         1
       );
 
@@ -178,15 +205,8 @@
         -1
       );
 
-      dotPeriod.style.left = `${homePeriod.x}px`;
-      dotPeriod.style.top = `${homePeriod.y}px`;
-      dotI.style.left = `${homeI.x}px`;
-      dotI.style.top = `${homeI.y}px`;
-    }
-
-    function renderDot(el, p) {
-      el.style.left = `${p.x}px`;
-      el.style.top = `${p.y}px`;
+      renderDot(dotPeriod, homePeriod);
+      renderDot(dotI, homeI);
     }
 
     function animate(now) {
@@ -205,7 +225,6 @@
       } else {
         const progress = t / moveMs;
         const angle = progress * Math.PI * 2;
-
         renderDot(dotPeriod, pointOnOrbit(orbit1, angle));
         renderDot(dotI, pointOnOrbit(orbit2, angle));
       }
