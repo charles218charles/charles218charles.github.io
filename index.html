@@ -5,23 +5,142 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>charles.email</title>
   <style>
-    html, body { height: 100%; margin: 0; }
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
     body {
       display: grid;
       place-items: center;
       background: radial-gradient(circle at 30% 20%, #f7f7ff, #f2f2f2 60%, #ededed);
       color: #111;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
     }
+
+    .scene {
+      position: relative;
+      display: inline-block;
+    }
+
     .mark {
+      position: relative;
+      z-index: 2;
       font-size: clamp(2.4rem, 8vw, 5rem);
       font-weight: 700;
       letter-spacing: -0.03em;
       line-height: 1;
+      white-space: nowrap;
+    }
+
+    /* Hide the original period and the original i dot */
+    .period {
+      color: transparent;
+    }
+
+    .i-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    .i-wrap .i-dot-hidden {
+      position: absolute;
+      left: 50%;
+      top: 0.02em;
+      width: 0.18em;
+      height: 0.18em;
+      transform: translateX(-50%);
+      background: #f2f2f2; /* roughly matches background so the native i dot disappears */
+      border-radius: 50%;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    /* Orbit rings */
+    .orbit {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      width: min(78vw, 720px);
+      height: min(26vw, 240px);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .orbit.orbit-2 {
+      transform: translate(-50%, -50%) rotate(65deg);
+      width: min(68vw, 620px);
+      height: min(18vw, 170px);
+    }
+
+    .particle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 0.18em;
+      height: 0.18em;
+      background: #111;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 12px rgba(17,17,17,0.18);
+    }
+
+    .orbit-1 {
+      animation: spin 9s linear infinite;
+    }
+
+    .orbit-2 {
+      animation: spinReverse 6.8s linear infinite;
+    }
+
+    .orbit-1 .particle {
+      transform: translate(-50%, -50%) translateX(calc(min(78vw, 720px) / 2));
+    }
+
+    .orbit-2 .particle {
+      transform: translate(-50%, -50%) translateX(calc(min(68vw, 620px) / 2));
+    }
+
+    @keyframes spin {
+      from {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+      to {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+
+    @keyframes spinReverse {
+      from {
+        transform: translate(-50%, -50%) rotate(65deg) rotate(360deg);
+      }
+      to {
+        transform: translate(-50%, -50%) rotate(65deg) rotate(0deg);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .orbit-1,
+      .orbit-2 {
+        animation: none;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="mark">charles.email</div>
+  <div class="scene">
+    <div class="orbit orbit-1" aria-hidden="true">
+      <div class="particle"></div>
+    </div>
+
+    <div class="orbit orbit-2" aria-hidden="true">
+      <div class="particle"></div>
+    </div>
+
+    <div class="mark" aria-label="charles.email">
+      charles<span class="period">.</span>ema<span class="i-wrap">i<span class="i-dot-hidden"></span></span>l
+    </div>
+  </div>
 </body>
 </html>
