@@ -10,95 +10,223 @@
       margin: 0;
     }
 
+    :root {
+      --bg1: #f7f7ff;
+      --bg2: #f2f2f2;
+      --bg3: #ededed;
+      --fg: #111;
+    }
+
     body {
       display: grid;
       place-items: center;
-      background: radial-gradient(circle at 30% 20%, #f7f7ff, #f2f2f2 60%, #ededed);
+      background: radial-gradient(circle at 30% 20%, var(--bg1), var(--bg2) 60%, var(--bg3));
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
       overflow: hidden;
     }
 
-    .wrap {
-      width: min(92vw, 1100px);
+    .scene {
+      position: relative;
+      display: inline-block;
+      padding: 2rem 2.5rem;
     }
 
-    svg {
-      width: 100%;
-      height: auto;
-      display: block;
-      overflow: visible;
-    }
-
-    .word {
-      font-size: 96px;
+    .mark {
+      position: relative;
+      z-index: 2;
+      font-size: clamp(2.4rem, 8vw, 5rem);
       font-weight: 700;
-      fill: #111;
       letter-spacing: -0.03em;
+      line-height: 1;
+      color: var(--fg);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    /* Keep width/spacing of the real period, but hide it */
+    .period-anchor {
+      opacity: 0;
+    }
+
+    /* Use dotless i so there is no native i-dot to fight with */
+    .i-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    /* Invisible anchor for where the i dot should live */
+    .i-home {
+      position: absolute;
+      left: 50%;
+      top: 0.02em;
+      width: 0.18em;
+      height: 0.18em;
+      transform: translate(-50%, -100%);
+      opacity: 0;
+      pointer-events: none;
     }
 
     .dot {
-      fill: #111;
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      margin-left: -6px;
+      margin-top: -6px;
+      border-radius: 50%;
+      background: var(--fg);
+      z-index: 3;
+      pointer-events: none;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.9);
     }
 
     @media (max-width: 700px) {
-      .word {
-        font-size: 72px;
+      .dot {
+        width: 10px;
+        height: 10px;
+        margin-left: -5px;
+        margin-top: -5px;
       }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .orbiting {
-        display: none;
-      }
-      .home-dot {
-        display: inline;
+      .dot {
+        transition: none;
       }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <svg viewBox="0 0 1100 260" aria-label="charles.email">
-      <!-- Text with the real period and i-dot removed -->
-      <text x="180" y="150" class="word">charles email</text>
+  <div class="scene" id="scene">
+    <div class="mark" id="mark" aria-label="charles.email">
+      charles<span class="period-anchor" id="periodAnchor">.</span>ema<span class="i-wrap">ı<span class="i-home" id="iHome"></span></span>l
+    </div>
 
-      <!-- static home dots for reduced motion -->
-      <circle class="dot home-dot" cx="516" cy="131" r="5.5" />
-      <circle class="dot home-dot" cx="771" cy="90" r="5.5" />
-
-      <!-- animated dots -->
-      <g class="orbiting">
-        <!-- period dot -->
-        <circle class="dot" r="5.5">
-          <animateMotion
-            dur="5s"
-            repeatCount="indefinite"
-            keyTimes="0;0.8;1"
-            keySplines="0.42 0 0.58 1;0 0 1 1"
-            calcMode="spline"
-            path="M 516 131
-                  C 380 40, 300 95, 286 128
-                  C 304 176, 438 205, 612 190
-                  C 806 174, 892 108, 850 76
-                  C 795 34, 638 38, 516 131" />
-        </circle>
-
-        <!-- i dot -->
-        <circle class="dot" r="5.5">
-          <animateMotion
-            dur="5s"
-            repeatCount="indefinite"
-            keyTimes="0;0.8;1"
-            keySplines="0.42 0 0.58 1;0 0 1 1"
-            calcMode="spline"
-            path="M 771 90
-                  C 742 24, 660 8, 620 42
-                  C 583 74, 602 150, 655 214
-                  C 694 259, 731 241, 737 191
-                  C 744 140, 794 117, 771 90" />
-        </circle>
-      </g>
-    </svg>
+    <div class="dot" id="dotPeriod" aria-hidden="true"></div>
+    <div class="dot" id="dotI" aria-hidden="true"></div>
   </div>
+
+  <script>
+    const scene = document.getElementById('scene');
+    const mark = document.getElementById('mark');
+    const periodAnchor = document.getElementById('periodAnchor');
+    const iHome = document.getElementById('iHome');
+    const dotPeriod = document.getElementById('dotPeriod');
+    const dotI = document.getElementById('dotI');
+
+    const cycleMs = 5000;      // 4s orbit + 1s hold
+    const moveMs = 4000;
+    const holdMs = 1000;
+
+    let homePeriod = { x: 0, y: 0 };
+    let homeI = { x: 0, y: 0 };
+    let orbit1, orbit2;
+    let reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function centerOf(el) {
+      const r = el.getBoundingClientRect();
+      const s = scene.getBoundingClientRect();
+      return {
+        x: r.left - s.left + r.width / 2,
+        y: r.top - s.top + r.height / 2
+      };
+    }
+
+    function buildOrbit(home, rx, ry, rotationDeg, direction = 1) {
+      const rot = rotationDeg * Math.PI / 180;
+
+      // Start of ellipse is always the home point
+      const cx = home.x - rx * Math.cos(rot);
+      const cy = home.y - rx * Math.sin(rot);
+
+      return { home, cx, cy, rx, ry, rot, direction };
+    }
+
+    function pointOnOrbit(o, angle) {
+      const a = angle * o.direction;
+      const cosA = Math.cos(a);
+      const sinA = Math.sin(a);
+      const cosR = Math.cos(o.rot);
+      const sinR = Math.sin(o.rot);
+
+      return {
+        x: o.cx + (o.rx * cosA * cosR) - (o.ry * sinA * sinR),
+        y: o.cy + (o.rx * cosA * sinR) + (o.ry * sinA * cosR)
+      };
+    }
+
+    function layout() {
+      homePeriod = centerOf(periodAnchor);
+      homeI = centerOf(iHome);
+
+      const mr = mark.getBoundingClientRect();
+      const width = mr.width;
+      const height = mr.height;
+
+      orbit1 = buildOrbit(
+        homePeriod,
+        width * 0.52,
+        height * 1.35,
+        -8,
+        1
+      );
+
+      orbit2 = buildOrbit(
+        homeI,
+        width * 0.34,
+        height * 1.55,
+        67,
+        -1
+      );
+
+      dotPeriod.style.left = `${homePeriod.x}px`;
+      dotPeriod.style.top = `${homePeriod.y}px`;
+      dotI.style.left = `${homeI.x}px`;
+      dotI.style.top = `${homeI.y}px`;
+    }
+
+    function renderDot(el, p) {
+      el.style.left = `${p.x}px`;
+      el.style.top = `${p.y}px`;
+    }
+
+    function animate(now) {
+      if (reducedMotion) {
+        renderDot(dotPeriod, homePeriod);
+        renderDot(dotI, homeI);
+        requestAnimationFrame(animate);
+        return;
+      }
+
+      const t = now % cycleMs;
+
+      if (t >= moveMs) {
+        renderDot(dotPeriod, homePeriod);
+        renderDot(dotI, homeI);
+      } else {
+        const progress = t / moveMs;
+        const angle = progress * Math.PI * 2;
+
+        renderDot(dotPeriod, pointOnOrbit(orbit1, angle));
+        renderDot(dotI, pointOnOrbit(orbit2, angle));
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    const ro = new ResizeObserver(layout);
+    ro.observe(scene);
+    ro.observe(mark);
+
+    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
+      reducedMotion = e.matches;
+      layout();
+    });
+
+    window.addEventListener('load', layout);
+    window.addEventListener('resize', layout);
+
+    layout();
+    requestAnimationFrame(animate);
+  </script>
 </body>
 </html>
