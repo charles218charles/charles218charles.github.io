@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Beazley CISO Briefing — Feedback</title>
+<title> CISO Briefing — Feedback</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
@@ -38,7 +38,7 @@
 <div class="container">
   <div class="header">
     <h1>&#128272; Briefing Feedback</h1>
-    <p>Help Claude learn what matters to you at Beazley</p>
+    <p>Help Claude learn what matters to you.</p>
   </div>
   <div class="card" id="form-view">
     <div class="item-title" id="item-title">Loading...</div>
@@ -114,7 +114,7 @@
 
   async function submitFeedback() {
     const token = params.token;
-    if (!token) { showError('No GitHub token found in URL.'); return; }
+    if (!token) { showError('No token found in URL.'); return; }
     if (!vote) { showError('Please click Useful or Not useful first.'); return; }
 
     const btn = document.getElementById('submit-btn');
@@ -130,7 +130,7 @@
 
     try {
       const getRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`, {
-        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' }
       });
       const fileData = await getRes.json();
       const current = JSON.parse(atob(fileData.content.replace(/\n/g, '')));
@@ -156,7 +156,7 @@
       const putRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `token ${token}`,
+          'Authorization': `Bearer ${token}`
           'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json'
         },
