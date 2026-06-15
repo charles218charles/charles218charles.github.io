@@ -65,6 +65,8 @@
 </div>
 
 <script>
+ const WORKER_URL = 'https://withered-scene-e3d6.ch-e92.workers.dev';
+
  let vote = null;
  let tagStates = {};
  let params = {};
@@ -114,7 +116,7 @@
 
  async function submitFeedback() {
    const token = params.token;
-   if (!token) { showError('No token found in URL.'); return; }
+   if (!token) { showError('No token found in URL — please use the link from your email.'); return; }
    if (!vote) { showError('Please click Useful or Not useful first.'); return; }
 
    const btn = document.getElementById('submit-btn');
@@ -124,29 +126,24 @@
    const likedTags = Object.entries(tagStates).filter(([,v]) => v === 'liked').map(([k]) => k);
    const dislikedTags = Object.entries(tagStates).filter(([,v]) => v === 'disliked').map(([k]) => k);
 
-   const OWNER = 'charles218charles';
-   const REPO = 'beazley-ciso-briefing';
-   const FILE = 'feedback.json';
-
    try {
-     const getRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`, {
-       headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+     // Read current feedback.json via worker
+     const getRes = await fetch(`${WORKER_URL}/?token=${encodeURIComponent(token)}`, {
+       method: 'GET'
      });
 
-     const rawText = await getRes.text();
-     console.log('GitHub response status:', getRes.status);
-     console.log('GitHub response body:', rawText);
-
      if (!getRes.ok) {
-       showError(`GitHub error ${getRes.status}: ${rawText.substring(0, 200)}`);
+       const err = await getRes.json();
+       showError(`Read error: ${err.error || getRes.status}`);
        btn.disabled = false;
        btn.textContent = 'Save Feedback';
        return;
      }
 
-     const fileData = JSON.parse(rawText);
+     const fileData = await getRes.json();
      const current = JSON.parse(atob(fileData.content.replace(/\n/g, '')));
 
+     // Merge tag preferences
      likedTags.forEach(t => {
        if (!current.liked_tags.includes(t)) current.liked_tags.push(t);
        current.disliked_tags = current.disliked_tags.filter(d => d !== t);
@@ -156,6 +153,7 @@
        current.liked_tags = current.liked_tags.filter(l => l !== t);
      });
 
+     // Add to history
      current.feedback_history.unshift({
        date: new Date().toISOString(),
        title: params.title,
@@ -165,13 +163,10 @@
      });
      current.feedback_history = current.feedback_history.slice(0, 50);
 
-     const putRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`, {
+     // Write back via worker
+     const putRes = await fetch(`${WORKER_URL}/?token=${encodeURIComponent(token)}`, {
        method: 'PUT',
-       headers: {
-         'Authorization': `Bearer ${token}`,
-         'Accept': 'application/vnd.github.v3+json',
-         'Content-Type': 'application/json'
-       },
+       headers: { 'Content-Type': 'application/json' },
        body: JSON.stringify({
          message: `Feedback: ${vote} — ${params.title.substring(0, 50)}`,
          content: btoa(unescape(encodeURIComponent(JSON.stringify(current, null, 2)))),
@@ -184,7 +179,7 @@
        document.getElementById('success-view').style.display = 'block';
      } else {
        const err = await putRes.json();
-       showError(`GitHub write error: ${err.message}`);
+       showError(`Save error: ${err.message || JSON.stringify(err)}`);
        btn.disabled = false;
        btn.textContent = 'Save Feedback';
      }
