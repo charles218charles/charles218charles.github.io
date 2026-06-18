@@ -141,7 +141,11 @@
      }
 
      const fileData = await getRes.json();
-     const current = JSON.parse(atob(fileData.content.replace(/\n/g, '')));
+     // Decode base64 -> bytes -> UTF-8. Using atob() then JSON.parse directly
+     // treats each byte as Latin-1, mangling multi-byte UTF-8 (em/en dashes,
+     // smart quotes) and compounding the corruption on every save.
+     const bytes = Uint8Array.from(atob(fileData.content.replace(/\n/g, '')), c => c.charCodeAt(0));
+     const current = JSON.parse(new TextDecoder('utf-8').decode(bytes));
 
      // Merge tag preferences
      likedTags.forEach(t => {
