@@ -48,10 +48,10 @@
  </div>
  <div class="card">
    <div class="token-row">
-     <input type="password" id="token" placeholder="GitHub feedback token">
+     <input type="password" id="key" placeholder="Feedback key">
      <button class="btn btn-primary" id="load-btn" onclick="loadFeedback()">Load</button>
    </div>
-   <div class="token-hint">Tip: open this page as <code>tags.html?token=YOUR_TOKEN</code> to skip pasting. The token is the same one used by the feedback links.</div>
+   <div class="token-hint">Tip: open this page as <code>tags.html?key=YOUR_KEY</code> to skip pasting. This is the same app key carried by the feedback links — not a GitHub token.</div>
 
    <div class="editor" id="editor">
      <div class="section liked" id="liked-section">
@@ -83,14 +83,14 @@
  let disliked = [];
 
  window.onload = function() {
-   const t = new URLSearchParams(window.location.search).get('token');
-   if (t) { document.getElementById('token').value = t; loadFeedback(); }
+   const k = new URLSearchParams(window.location.search).get('key');
+   if (k) { document.getElementById('key').value = k; loadFeedback(); }
  };
 
- function getToken() {
-   const t = document.getElementById('token').value.trim();
-   if (!t) { showStatus('Enter your feedback token first.', false); return null; }
-   return t;
+ function getKey() {
+   const k = document.getElementById('key').value.trim();
+   if (!k) { showStatus('Enter your feedback key first.', false); return null; }
+   return k;
  }
 
  // Decode base64 -> bytes -> UTF-8. Never JSON.parse(atob(...)) — that mangles
@@ -105,12 +105,12 @@
  }
 
  async function loadFeedback() {
-   const token = getToken();
-   if (!token) return;
+   const key = getKey();
+   if (!key) return;
    const btn = document.getElementById('load-btn');
    btn.disabled = true; btn.textContent = 'Loading...';
    try {
-     const res = await fetch(`${WORKER_URL}/?token=${encodeURIComponent(token)}`);
+     const res = await fetch(`${WORKER_URL}/?key=${encodeURIComponent(key)}`);
      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || res.status); }
      const file = await res.json();
      const data = decodeContent(file.content);
@@ -172,14 +172,14 @@
  }
 
  async function save() {
-   const token = getToken();
-   if (!token) return;
+   const key = getKey();
+   if (!key) return;
    const btn = document.getElementById('save-btn');
    btn.disabled = true; btn.textContent = 'Saving...';
    try {
      // Re-read to get the freshest file + sha, so we never clobber history that
      // votes may have appended since we loaded.
-     const getRes = await fetch(`${WORKER_URL}/?token=${encodeURIComponent(token)}`);
+     const getRes = await fetch(`${WORKER_URL}/?key=${encodeURIComponent(key)}`);
      if (!getRes.ok) { const e = await getRes.json().catch(() => ({})); throw new Error(e.error || getRes.status); }
      const file = await getRes.json();
      const data = decodeContent(file.content);
@@ -187,7 +187,7 @@
      data.liked_tags = liked.slice();
      data.disliked_tags = disliked.slice();
 
-     const putRes = await fetch(`${WORKER_URL}/?token=${encodeURIComponent(token)}`, {
+     const putRes = await fetch(`${WORKER_URL}/?key=${encodeURIComponent(key)}`, {
        method: 'PUT',
        headers: { 'Content-Type': 'application/json' },
        body: JSON.stringify({

@@ -80,7 +80,7 @@
      tags: (urlParams.get('tags') || '').split(',').filter(t => t.trim()),
      vote: urlParams.get('vote') || null,
      date: urlParams.get('date') || '',
-     token: urlParams.get('token') || ''
+     key: urlParams.get('key') || ''
    };
 
    document.getElementById('item-title').textContent = params.title;
@@ -115,8 +115,8 @@
  }
 
  async function submitFeedback() {
-   const token = params.token;
-   if (!token) { showError('No token found in URL — please use the link from your email.'); return; }
+   const key = params.key;
+   if (!key) { showError('No key found in URL — please use the link from your email.'); return; }
    if (!vote) { showError('Please click Useful or Not useful first.'); return; }
 
    const btn = document.getElementById('submit-btn');
@@ -128,7 +128,7 @@
 
    try {
      // Read current feedback.json via worker
-     const getRes = await fetch(`${WORKER_URL}/?token=${encodeURIComponent(token)}`, {
+     const getRes = await fetch(`${WORKER_URL}/?key=${encodeURIComponent(key)}`, {
        method: 'GET'
      });
 
@@ -168,7 +168,7 @@
      current.feedback_history = current.feedback_history.slice(0, 50);
 
      // Write back via worker
-     const putRes = await fetch(`${WORKER_URL}/?token=${encodeURIComponent(token)}`, {
+     const putRes = await fetch(`${WORKER_URL}/?key=${encodeURIComponent(key)}`, {
        method: 'PUT',
        headers: { 'Content-Type': 'application/json' },
        body: JSON.stringify({
