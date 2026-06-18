@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beazley CISO Briefing — Manage Tags</title>
+<style>
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+ .container { max-width: 640px; margin: 0 auto; }
+ .header { background: #1a237e; color: white; padding: 24px; border-radius: 8px 8px 0 0; }
+ .header h1 { font-size: 20px; margin-bottom: 4px; }
+ .header p { font-size: 13px; color: #9fa8da; }
+ .card { background: white; padding: 24px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+ .token-row { display: flex; gap: 8px; margin-bottom: 8px; }
+ .token-row input { flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+ .token-hint { font-size: 11px; color: #999; margin-bottom: 20px; }
+ .btn { padding: 10px 18px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
+ .btn-primary { background: #1a237e; color: white; }
+ .btn-primary:hover { background: #283593; }
+ .btn-primary:disabled { background: #9fa8da; cursor: not-allowed; }
+ .section { margin-bottom: 20px; display: none; }
+ .section h3 { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+ .section.liked h3 { color: #1b5e20; }
+ .section.disliked h3 { color: #b71c1c; }
+ .tags-grid { display: flex; flex-wrap: wrap; gap: 8px; min-height: 20px; }
+ .empty { font-size: 13px; color: #aaa; font-style: italic; }
+ .tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px 6px 14px; border-radius: 20px; font-size: 13px; border: 2px solid; }
+ .tag.liked { background: #e8f5e9; border-color: #1b5e20; color: #1b5e20; }
+ .tag.disliked { background: #ffebee; border-color: #b71c1c; color: #b71c1c; }
+ .tag button { border: none; background: none; cursor: pointer; font-size: 13px; font-weight: bold; padding: 0 2px; line-height: 1; color: inherit; opacity: 0.7; }
+ .tag button:hover { opacity: 1; }
+ .add-row { display: flex; gap: 8px; margin: 8px 0 20px; }
+ .add-row input { flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+ .btn-like { background: #e8f5e9; color: #1b5e20; border: 2px solid #1b5e20; }
+ .btn-dislike { background: #ffebee; color: #b71c1c; border: 2px solid #b71c1c; }
+ .editor { display: none; }
+ .status { font-size: 13px; padding: 12px; border-radius: 6px; margin-top: 8px; display: none; }
+ .status.ok { background: #e8f5e9; color: #1b5e20; }
+ .status.err { background: #ffebee; color: #b71c1c; }
+</style>
+</head>
+<body>
+<div class="container">
+ <div class="header">
+   <h1>&#127991;&#65039; Manage Briefing Tags</h1>
+   <p>Edit the technologies and topics Claude prioritises or excludes</p>
+ </div>
+ <div class="card">
+   <div class="token-row">
+     <input type="password" id="token" placeholder="GitHub feedback token">
+     <button class="btn btn-primary" id="load-btn" onclick="loadFeedback()">Load</button>
+   </div>
+   <div class="token-hint">Tip: open this page as <code>tags.html?token=YOUR_TOKEN</code> to skip pasting. The token is the same one used by the feedback links.</div>
+
+   <div class="editor" id="editor">
+     <div class="section liked" id="liked-section">
+       <h3>&#128077; Useful — prioritise these</h3>
+       <div class="tags-grid" id="liked-grid"></div>
+     </div>
+     <div class="section disliked" id="disliked-section">
+       <h3>&#128078; Not useful — deprioritise / exclude these</h3>
+       <div class="tags-grid" id="disliked-grid"></div>
+     </div>
+
+     <div class="add-row">
+       <input type="text" id="new-tag" placeholder="add a tag, e.g. joomla" onkeydown="if(event.key==='Enter')addTag('liked')">
+       <button class="btn btn-like" onclick="addTag('liked')">+ Useful</button>
+       <button class="btn btn-dislike" onclick="addTag('disliked')">+ Not useful</button>
+     </div>
+
+     <button class="btn btn-primary" id="save-btn" onclick="save()" style="width:100%;">Save changes</button>
+   </div>
+
+   <div class="status" id="status"></div>
+ </div>
+</div>
+
+<script>
+ const WORKER_URL = 'https://withered-scene-e3d6.ch-e92.workers.dev';
+
+ let liked = [];
+ let disliked = [];
+
+ window.onload = function() {
+   const t = new URLSearchParams(window.location.search).get('token');
+   if (t) { document.getElementById('token').value = t; loadFeedback(); }
+ };
+
+ function getToken() {
+   const t = document.getElementById('token').value.trim();
+   if (!t) { showStatus('Enter your feedback token first.', false); return null; }
+   return t;
+ }
+
+ // Decode base64 -> bytes -> UTF-8. Never JSON.parse(atob(...)) — that mangles
+ // multi-byte UTF-8 (en/em dashes) and is what corrupted the data before.
+ function decodeContent(b64) {
+   const bytes = Uint8Array.from(atob(b64.replace(/\n/g, '')), c => c.charCodeAt(0));
+   return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+ }
+
+ function normTag(t) {
+   return t.trim().toLowerCase().replace(/[\s_]+/g, '-').replace(/-{2,}/g, '-').replace(/^-+|-+$/g, '');
+ }
+
+ async function loadFeedback() {
+   const token = getToken();
+   if (!token) return;
+   const btn = document.getElementById('load-btn');
+   btn.disabled = true; btn.textContent = 'Loading...';
+   try {
+     const res = await fetch(`${WORKER_URL}/?token=${encodeURIComponent(token)}`);
+     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || res.status); }
+     const file = await res.json();
+     const data = decodeContent(file.content);
+     liked = (data.liked_tags || []).slice();
+     disliked = (data.disliked_tags || []).slice();
+     document.getElementById('editor').style.display = 'block';
+     render();
+     showStatus('Loaded. Edit your tags, then Save.', true);
+   } catch (e) {
+     showStatus(`Could not load: ${e.message}`, false);
+   } finally {
+     btn.disabled = false; btn.textContent = 'Load';
+   }
+ }
+
+ function render() {
+   renderGrid('liked-grid', liked, 'liked');
+   renderGrid('disliked-grid', disliked, 'disliked');
+ }
+
+ function renderGrid(gridId, list, kind) {
+   const grid = document.getElementById(gridId);
+   grid.innerHTML = '';
+   if (!list.length) { grid.innerHTML = '<span class="empty">none</span>'; return; }
+   list.forEach(tag => {
+     const el = document.createElement('span');
+     el.className = `tag ${kind}`;
+     const other = kind === 'liked' ? 'disliked' : 'liked';
+     const arrow = kind === 'liked' ? '&#8595;' : '&#8593;'; // move to the other list
+     el.innerHTML = `<span>${tag}</span>
+       <button title="Move to ${other}" onclick="moveTag('${tag}','${other}')">${arrow}</button>
+       <button title="Remove" onclick="removeTag('${tag}')">&times;</button>`;
+     grid.appendChild(el);
+   });
+ }
+
+ function addTag(target) {
+   const input = document.getElementById('new-tag');
+   const tag = normTag(input.value);
+   if (!tag) return;
+   liked = liked.filter(t => t !== tag);
+   disliked = disliked.filter(t => t !== tag);
+   (target === 'liked' ? liked : disliked).push(tag);
+   input.value = '';
+   render();
+ }
+
+ function moveTag(tag, to) {
+   liked = liked.filter(t => t !== tag);
+   disliked = disliked.filter(t => t !== tag);
+   (to === 'liked' ? liked : disliked).push(tag);
+   render();
+ }
+
+ function removeTag(tag) {
+   liked = liked.filter(t => t !== tag);
+   disliked = disliked.filter(t => t !== tag);
+   render();
+ }
+
+ async function save() {
+   const token = getToken();
+   if (!token) return;
+   const btn = document.getElementById('save-btn');
+   btn.disabled = true; btn.textContent = 'Saving...';
+   try {
+     // Re-read to get the freshest file + sha, so we never clobber history that
+     // votes may have appended since we loaded.
+     const getRes = await fetch(`${WORKER_URL}/?token=${encodeURIComponent(token)}`);
+     if (!getRes.ok) { const e = await getRes.json().catch(() => ({})); throw new Error(e.error || getRes.status); }
+     const file = await getRes.json();
+     const data = decodeContent(file.content);
+
+     data.liked_tags = liked.slice();
+     data.disliked_tags = disliked.slice();
+
+     const putRes = await fetch(`${WORKER_URL}/?token=${encodeURIComponent(token)}`, {
+       method: 'PUT',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({
+         message: 'Update liked/disliked tags via manager',
+         content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))),
+         sha: file.sha
+       })
+     });
+     if (!putRes.ok) { const e = await putRes.json().catch(() => ({})); throw new Error(e.message || JSON.stringify(e)); }
+     showStatus('Saved. Claude will use these on the next briefing.', true);
+   } catch (e) {
+     showStatus(`Save failed: ${e.message}`, false);
+   } finally {
+     btn.disabled = false; btn.textContent = 'Save changes';
+   }
+ }
+
+ function showStatus(msg, ok) {
+   const el = document.getElementById('status');
+   el.textContent = msg;
+   el.className = `status ${ok ? 'ok' : 'err'}`;
+   el.style.display = 'block';
+ }
+</script>
+</body>
+</html>
