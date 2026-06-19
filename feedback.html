@@ -65,7 +65,7 @@
  let tagStates = {};
  let params = {};
 
- window.onload = function() {
+ window.onload = async function() {
    const urlParams = new URLSearchParams(window.location.search);
    params = {
      title: urlParams.get('title') || 'Unknown item',
@@ -80,17 +80,39 @@
    document.getElementById('item-meta').textContent =
      [params.severity, params.source, params.date].filter(Boolean).join(' · ');
 
+   // This item's own tags start neutral.
+   params.tags.forEach(t => { if (!(t in tagStates)) tagStates[t] = 'neutral'; });
+
+   // Load existing preferences so ALL previously-tagged tags stay visible,
+   // each pre-set to its saved Useful (green) / Not useful (red) state.
+   if (params.key) {
+     try {
+       const res = await fetch(`${WORKER_URL}/?key=${encodeURIComponent(params.key)}`);
+       if (res.ok) {
+         const file = await res.json();
+         const bytes = Uint8Array.from(atob(file.content.replace(/\n/g, '')), c => c.charCodeAt(0));
+         const data = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+         (data.liked_tags || []).forEach(t => tagStates[t] = 'liked');
+         (data.disliked_tags || []).forEach(t => tagStates[t] = 'disliked');
+       }
+     } catch (e) { /* fall back to showing just this item's tags */ }
+   }
+   renderTags();
+ };
+
+ function renderTags() {
    const grid = document.getElementById('tags-grid');
-   params.tags.forEach(tag => {
-     tagStates[tag] = 'neutral';
+   grid.innerHTML = '';
+   Object.keys(tagStates).sort().forEach(tag => {
+     const state = tagStates[tag];
      const el = document.createElement('div');
-     el.className = 'tag';
+     el.className = `tag ${state === 'neutral' ? '' : state}`;
      el.textContent = tag;
      el.id = `tag-${tag}`;
      el.onclick = () => cycleTag(tag);
      grid.appendChild(el);
    });
- };
+ }
 
  function cycleTag(tag) {
    const states = ['neutral', 'liked', 'disliked'];
@@ -105,7 +127,7 @@
 
    const likedTags = Object.entries(tagStates).filter(([,v]) => v === 'liked').map(([k]) => k);
    const dislikedTags = Object.entries(tagStates).filter(([,v]) => v === 'disliked').map(([k]) => k);
-   if (!likedTags.length && !dislikedTags.length) { showError('Tap at least one tag to mark it Useful (green) or Not useful (red).'); return; }
+   const neutralTags = Object.entries(tagStates).filter(([,v]) => v === 'neutral').map(([k]) => k);
 
    const btn = document.getElementById('submit-btn');
    btn.disabled = true;
@@ -140,6 +162,11 @@
      dislikedTags.forEach(t => {
        if (!current.disliked_tags.includes(t)) current.disliked_tags.push(t);
        current.liked_tags = current.liked_tags.filter(l => l !== t);
+     });
+     // Tags cycled back to neutral are removed from both sets.
+     neutralTags.forEach(t => {
+       current.liked_tags = current.liked_tags.filter(l => l !== t);
+       current.disliked_tags = current.disliked_tags.filter(d => d !== t);
      });
 
      // Add to history
