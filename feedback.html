@@ -112,14 +112,13 @@
  };
 
  function renderTags() {
-   const itemSet = new Set(params.tags);
-   // Top: this update's tags (alpha).
-   fillGrid('item-tags-grid', params.tags.slice().sort());
-   // Below: existing buckets, excluding this update's tags, alpha — greens then reds.
-   const liked = Object.keys(tagStates).filter(t => tagStates[t] === 'liked' && !itemSet.has(t)).sort();
-   const disliked = Object.keys(tagStates).filter(t => tagStates[t] === 'disliked' && !itemSet.has(t)).sort();
-   fillGrid('liked-grid', liked);
-   fillGrid('disliked-grid', disliked);
+   // Top: this update's tags that are still undecided (grey). Once you turn one
+   // green/red it leaves the top and drops into the bucket below.
+   const undecided = params.tags.filter(t => (tagStates[t] || 'neutral') === 'neutral').slice().sort();
+   fillGrid('item-tags-grid', undecided);
+   // Buckets by state (alpha) — includes tags just moved down from the top.
+   fillGrid('liked-grid', Object.keys(tagStates).filter(t => tagStates[t] === 'liked').sort());
+   fillGrid('disliked-grid', Object.keys(tagStates).filter(t => tagStates[t] === 'disliked').sort());
  }
 
  function fillGrid(id, tags) {
