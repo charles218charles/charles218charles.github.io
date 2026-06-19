@@ -37,24 +37,19 @@
 <body>
 <div class="container">
  <div class="header">
-   <h1>&#128272; Briefing Feedback</h1>
-   <p>Help Claude learn what matters to you</p>
+   <h1>&#127919; Train the Model</h1>
+   <p>Tap each tag to teach Claude what's useful or not</p>
  </div>
  <div class="card" id="form-view">
    <div class="item-title" id="item-title">Loading...</div>
    <div class="item-meta" id="item-meta"></div>
 
-   <div class="vote-row">
-     <button class="vote-btn like" id="btn-like" onclick="setVote('like')">👍 Useful</button>
-     <button class="vote-btn dislike" id="btn-dislike" onclick="setVote('dislike')">👎 Not useful</button>
-   </div>
-
    <div class="tags-section">
-     <h3>Tag feedback — click to like or dislike each tag</h3>
+     <h3>Tap a tag once to mark it Useful (green), again for Not useful (red)</h3>
      <div class="tags-grid" id="tags-grid"></div>
    </div>
 
-   <button class="submit-btn" id="submit-btn" onclick="submitFeedback()">Save Feedback</button>
+   <button class="submit-btn" id="submit-btn" onclick="submitFeedback()">Save Training</button>
    <div class="error" id="error-msg"></div>
  </div>
 
@@ -67,7 +62,6 @@
 <script>
  const WORKER_URL = 'https://withered-scene-e3d6.ch-e92.workers.dev';
 
- let vote = null;
  let tagStates = {};
  let params = {};
 
@@ -78,7 +72,6 @@
      severity: urlParams.get('severity') || '',
      source: urlParams.get('source') || '',
      tags: (urlParams.get('tags') || '').split(',').filter(t => t.trim()),
-     vote: urlParams.get('vote') || null,
      date: urlParams.get('date') || '',
      key: urlParams.get('key') || ''
    };
@@ -86,8 +79,6 @@
    document.getElementById('item-title').textContent = params.title;
    document.getElementById('item-meta').textContent =
      [params.severity, params.source, params.date].filter(Boolean).join(' · ');
-
-   if (params.vote) setVote(params.vote);
 
    const grid = document.getElementById('tags-grid');
    params.tags.forEach(tag => {
@@ -101,12 +92,6 @@
    });
  };
 
- function setVote(v) {
-   vote = v;
-   document.getElementById('btn-like').classList.toggle('selected', v === 'like');
-   document.getElementById('btn-dislike').classList.toggle('selected', v === 'dislike');
- }
-
  function cycleTag(tag) {
    const states = ['neutral', 'liked', 'disliked'];
    const next = states[(states.indexOf(tagStates[tag]) + 1) % states.length];
@@ -117,14 +102,14 @@
  async function submitFeedback() {
    const key = params.key;
    if (!key) { showError('No key found in URL — please use the link from your email.'); return; }
-   if (!vote) { showError('Please click Useful or Not useful first.'); return; }
+
+   const likedTags = Object.entries(tagStates).filter(([,v]) => v === 'liked').map(([k]) => k);
+   const dislikedTags = Object.entries(tagStates).filter(([,v]) => v === 'disliked').map(([k]) => k);
+   if (!likedTags.length && !dislikedTags.length) { showError('Tap at least one tag to mark it Useful (green) or Not useful (red).'); return; }
 
    const btn = document.getElementById('submit-btn');
    btn.disabled = true;
    btn.textContent = 'Saving...';
-
-   const likedTags = Object.entries(tagStates).filter(([,v]) => v === 'liked').map(([k]) => k);
-   const dislikedTags = Object.entries(tagStates).filter(([,v]) => v === 'disliked').map(([k]) => k);
 
    try {
      // Read current feedback.json via worker
@@ -136,7 +121,7 @@
        const err = await getRes.json();
        showError(`Read error: ${err.error || getRes.status}`);
        btn.disabled = false;
-       btn.textContent = 'Save Feedback';
+       btn.textContent = 'Save Training';
        return;
      }
 
@@ -161,7 +146,6 @@
      current.feedback_history.unshift({
        date: new Date().toISOString(),
        title: params.title,
-       vote: vote,
        liked_tags: likedTags,
        disliked_tags: dislikedTags
      });
@@ -172,7 +156,7 @@
        method: 'PUT',
        headers: { 'Content-Type': 'application/json' },
        body: JSON.stringify({
-         message: `Feedback: ${vote} — ${params.title.substring(0, 50)}`,
+         message: `Tags update — ${params.title.substring(0, 50)}`,
          content: btoa(unescape(encodeURIComponent(JSON.stringify(current, null, 2)))),
          sha: fileData.sha
        })
@@ -185,12 +169,12 @@
        const err = await putRes.json();
        showError(`Save error: ${err.message || JSON.stringify(err)}`);
        btn.disabled = false;
-       btn.textContent = 'Save Feedback';
+       btn.textContent = 'Save Training';
      }
    } catch(e) {
      showError(`Error: ${e.message}`);
      btn.disabled = false;
-     btn.textContent = 'Save Feedback';
+     btn.textContent = 'Save Training';
    }
  }
 
